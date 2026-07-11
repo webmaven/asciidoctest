@@ -1,0 +1,99 @@
+= asciidoctest: Python Doctest Runner for AsciiDoc
+:toc: left
+:idprefix:
+:idseparator: -
+
+`asciidoctest` is a modern, high-developer-experience (DX) Python doctest runner specifically designed to parse, collect, and execute tests directly from AsciiDoc (`.adoc`) files and Python docstrings. 
+
+Unlike traditional approaches relying on fragile regular expressions, `asciidoctest` integrates robust AST-based parsing using `asciidoctrine` and `asciidocstring` to provide accurate, reliable, and compliant testing of documentation.
+
+== Features
+
+* **AST-Based Parsing**: Robust structure parsing using `asciidoctrine` (AsciiDoc parser) and `asciidocstring` (AsciiDoc docstring parser).
+* **Flexible Modes**:
+  - `explicit` (default): Only executes blocks with the `test` attribute/role (e.g. `[source,python,test]` or `[.test]\n[source,python]`).
+  - `eager`: Executes all `[source,python]` code blocks across your document.
+* **Shared Sequential State**: Within a standalone AsciiDoc document, subsequent blocks share state top-to-bottom sequentially. State is completely isolated between separate files.
+* **Modern Pytest Integration**: Automatic discovery of `.adoc` files and docstrings via custom pytest collectors.
+* **Unittest Compatibility**: Out-of-the-box support for `DocTestSuite` and `DocFileSuite`.
+
+== Installation
+
+To install `asciidoctest` in your project:
+
+[source,bash]
+----
+pip install asciidoctest
+----
+
+== Pytest Integration
+
+`asciidoctest` registers a `pytest` plugin automatically. Simply run `pytest` in your project directory:
+
+[source,bash]
+----
+pytest
+----
+
+=== Configuration
+
+You can configure target matching behavior in your `pyproject.toml` or `pytest.ini`:
+
+[source,ini]
+----
+[pytest]
+asciidoctest_mode = eager
+----
+
+Alternatively, you can supply the `--asciidoctest-mode` argument via command line:
+
+[source,bash]
+----
+pytest --asciidoctest-mode=eager
+----
+
+== Unittest Integration
+
+If you use the standard library `unittest` package, you can easily load and run tests using `DocFileSuite` or `DocTestSuite`:
+
+[source,python]
+----
+import unittest
+from asciidoctest import DocFileSuite
+
+def suite():
+    return DocFileSuite("README.adoc")
+
+if __name__ == "__main__":
+    unittest.main(defaultTest="suite")
+----
+
+== Examples (Interactive & Non-Interactive)
+
+Below are simple testable blocks that demonstrate sequential state-sharing and execution.
+
+We can run interactive python sessions with expected outputs:
+
+[source,python,test]
+----
+>>> x = "asciidoctest"
+>>> x.upper()
+'ASCIIDOCTEST'
+----
+
+We can also run non-interactive scripts with standard Python assertions. Note that because they run in the same document, the variable `x` defined above is shared sequentially:
+
+[source,python,test]
+----
+assert x == "asciidoctest"
+y = len(x)
+assert y == 12
+----
+
+Standard `doctest` features like ellipsis work perfectly:
+
+[source,python,test]
+----
+>>> print("Hello ... World")
+Hello ... World
+----

@@ -1,0 +1,40 @@
+[build-system]
+requires = ["setuptools>=61.0.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "asciidoctest"
+version = "0.1.0a1"
+description = "A Python doctest runner for AsciiDoc documents and docstrings."
+readme = {file = "README.adoc", content-type = "text/plain"}
+requires-python = ">=3.8"
+license = {text = "Apache-2.0"}
+authors = [
+    {name = "Michael Bernstein", email = "zopemaven@gmail.com"}
+]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: Apache Software License",
+    "Framework :: Pytest",
+]
+dependencies = [
+    "asciidoctrine>=0.1.0a3",
+    "asciidocstring>=0.1.0",
+    "lark>=1.3.1",
+]
+
+[project.urls]
+Homepage = "https://github.com/webmaven/asciidoctest"
+Repository = "https://github.com/webmaven/asciidoctest"
+
+[project.optional-dependencies]
+test = [
+    "pytest>=7.0",
+]
+
+[project.entry-points.pytest11]
+asciidoctest = "asciidoctest.pytest_plugin"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["asciidoctest*"]
