@@ -3,6 +3,16 @@
 
 This document lists all notable changes and releases for `asciidocstring`'s sibling package, `asciidoctest`.
 
+== [0.1.0a3] - 2026-07-14
+
+=== Changed
+* **Upgraded dependencies**:
+  - Upgraded `asciidoctrine` to `>=0.1.0a8`.
+  - Upgraded `asciidocstring` to `>=0.1.0a3`.
+* **Documentation Casing**: Aligned all references to `asciidoctest` / `AsciiDoctest` to follow standard casing style guide rules (using Title Case `AsciiDoctest` for prose, and lowercase backticks `asciidoctest` for code).
+
+---
+
 == [0.1.0a2] - 2026-07-13
 
 === Added
@@ -12,8 +22,8 @@ This document lists all notable changes and releases for `asciidocstring`'s sibl
 
 === Changed
 * **Upgraded dependencies**:
-  - Bumped `asciidoctrine` version requirement to `>=0.1.0a8`.
-  - Changed `asciidocstring` version constraint to `>=0.1.0a3`.
+  - Bumped `asciidoctrine` version requirement to `>=0.1.0a7` to leverage parser newline normalization and native footnotes.
+  - Changed `asciidocstring` version constraint to `>=0.1.0a2`.
 
 === Fixed
 * **Removed trailing newline workaround**: Cleaned up manual trailing-newline appending in `parser.py`, as standard line termination issues have been natively resolved in the upgraded upstream parser.

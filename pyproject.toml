@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "asciidoctest"
-version = "0.1.0a2"
+version = "0.1.0a3"
 description = "A Python doctest runner for AsciiDoc documents and docstrings."
 readme = {file = "README.adoc", content-type = "text/plain"}
 requires-python = ">=3.14"
