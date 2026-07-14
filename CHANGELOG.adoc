@@ -12,8 +12,8 @@ This document lists all notable changes and releases for `asciidocstring`'s sibl
 
 === Changed
 * **Upgraded dependencies**:
-  - Bumped `asciidoctrine` version requirement to `>=0.1.0a7` to leverage parser newline normalization and native footnotes.
-  - Changed `asciidocstring` version constraint to `>=0.1.0a2`.
+  - Bumped `asciidoctrine` version requirement to `>=0.1.0a8`.
+  - Changed `asciidocstring` version constraint to `>=0.1.0a3`.
 
 === Fixed
 * **Removed trailing newline workaround**: Cleaned up manual trailing-newline appending in `parser.py`, as standard line termination issues have been natively resolved in the upgraded upstream parser.

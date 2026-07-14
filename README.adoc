@@ -1,9 +1,15 @@
-= asciidoctest: Python Doctest Runner for AsciiDoc
+= AsciiDoctest: Python Doctest Runner for AsciiDoc
 :toc: left
 :idprefix:
 :idseparator: -
 
-`asciidoctest` is a Python doctest runner designed to parse, collect, and execute tests from AsciiDoc (`.adoc`) files and Python docstrings. 
+image:https://github.com/webmaven/asciidoctest/actions/workflows/ci.yml/badge.svg[CI Status, link=https://github.com/webmaven/asciidoctest/actions/workflows/ci.yml]
+image:https://img.shields.io/pypi/v/asciidoctest.svg[PyPI Version, link=https://pypi.org/project/asciidoctest/]
+image:https://img.shields.io/badge/python-3.14-blue.svg[Python Version]
+image:https://img.shields.io/badge/coverage-97%25-green.svg[Test Coverage]
+image:https://img.shields.io/badge/License-Apache_2.0-blue.svg[License, link=https://opensource.org/licenses/Apache-2.0]
+
+AsciiDoctest is a Python doctest runner designed to parse, collect, and execute tests from AsciiDoc (`.adoc`) files and Python docstrings. 
 
 It integrates AST-based parsing using `asciidoctrine` and `asciidocstring` to provide accurate and standard-compliant testing of documentation.
 
@@ -26,7 +32,7 @@ pip install asciidoctest
 
 == Pytest Integration
 
-`asciidoctest` automatically registers as a `pytest` plugin. Simply execute `pytest` in your project directory:
+AsciiDoctest automatically registers as a `pytest` plugin. Simply execute `pytest` in your project directory:
 
 [source,bash]
 ----
