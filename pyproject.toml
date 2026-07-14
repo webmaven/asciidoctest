@@ -7,7 +7,7 @@ name = "asciidoctest"
 version = "0.1.0a2"
 description = "A Python doctest runner for AsciiDoc documents and docstrings."
 readme = {file = "README.adoc", content-type = "text/plain"}
-requires-python = ">=3.8"
+requires-python = ">=3.14"
 license = {text = "Apache-2.0"}
 authors = [
     {name = "Michael Bernstein", email = "zopemaven@gmail.com"}
