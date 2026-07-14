@@ -150,3 +150,42 @@ def test_state_sharing_across_blocks():
     run_test_blocks(blocks, shared_globals)
     assert shared_globals.get("a") == 100
     assert shared_globals.get("b") == 150
+
+
+def test_parse_invalid_asciidoc_error():
+    from unittest.mock import patch
+    with patch("asciidoctest.parser.parse_to_ast", side_effect=Exception("Lark Exception")):
+        with pytest.raises(ValueError) as exc_info:
+            parse_adoc_tests("some adoc content")
+    assert "AsciiDoc Parse Error: Lark Exception" in str(exc_info.value)
+
+
+def test_interactive_unexpected_exception():
+    class MockBlock:
+        def __init__(self, content, is_interactive=True, line_number=1):
+            self.content = content
+            self.is_interactive = is_interactive
+            self.line_number = line_number
+
+    # This doctest raises an unexpected ZeroDivisionError since no expected output/exception is specified
+    blocks = [MockBlock(">>> 1 / 0\n")]
+    with pytest.raises(AsciiDocTestFailure) as exc_info:
+        run_test_blocks(blocks, {})
+    assert "Unexpected Exception" in str(exc_info.value)
+    assert "ZeroDivisionError" in str(exc_info.value)
+
+
+def test_non_interactive_generic_exception():
+    class MockBlock:
+        def __init__(self, content, is_interactive=False, line_number=10):
+            self.content = content
+            self.is_interactive = is_interactive
+            self.line_number = line_number
+
+    # Raise a standard TypeError in a non-interactive script block
+    blocks = [MockBlock("raise TypeError('custom typ_error')")]
+    with pytest.raises(AsciiDocTestFailure) as exc_info:
+        run_test_blocks(blocks, {})
+    assert "Exception raised in non-interactive block at line 10" in str(exc_info.value)
+    assert "TypeError: custom typ_error" in str(exc_info.value)
+

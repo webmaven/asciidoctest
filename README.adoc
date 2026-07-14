@@ -3,23 +3,21 @@
 :idprefix:
 :idseparator: -
 
-`asciidoctest` is a modern, high-developer-experience (DX) Python doctest runner specifically designed to parse, collect, and execute tests directly from AsciiDoc (`.adoc`) files and Python docstrings. 
+`asciidoctest` is a Python doctest runner designed to parse, collect, and execute tests from AsciiDoc (`.adoc`) files and Python docstrings. 
 
-Unlike traditional approaches relying on fragile regular expressions, `asciidoctest` integrates robust AST-based parsing using `asciidoctrine` and `asciidocstring` to provide accurate, reliable, and compliant testing of documentation.
+It integrates AST-based parsing using `asciidoctrine` and `asciidocstring` to provide accurate and standard-compliant testing of documentation.
 
 == Features
 
-* **AST-Based Parsing**: Robust structure parsing using `asciidoctrine` (AsciiDoc parser) and `asciidocstring` (AsciiDoc docstring parser).
-* **Flexible Modes**:
-  - `explicit` (default): Only executes blocks with the `test` attribute/role (e.g. `[source,python,test]` or `[.test]\n[source,python]`).
-  - `eager`: Executes all `[source,python]` code blocks across your document.
-* **Shared Sequential State**: Within a standalone AsciiDoc document, subsequent blocks share state top-to-bottom sequentially. State is completely isolated between separate files.
-* **Modern Pytest Integration**: Automatic discovery of `.adoc` files and docstrings via custom pytest collectors.
-* **Unittest Compatibility**: Out-of-the-box support for `DocTestSuite` and `DocFileSuite`.
+* **AST-Based Parsing**: Structural parsing using `asciidoctrine` (AsciiDoc parser) and `asciidocstring` (AsciiDoc docstring parser).
+* **Execution Modes**:
+  - `explicit` (default): Only executes blocks with the `test` attribute or role (e.g., `[source,python,test]` or `[.test]\n[source,python]`).
+  - `eager`: Executes all `[source,python]` code blocks across the document.
+* **Shared State**: Within a single AsciiDoc document, subsequent blocks share execution state sequentially top-to-bottom. Execution state is completely isolated between separate files.
+* **Pytest Integration**: Automatic discovery and execution of `.adoc` files and Python docstrings via registered pytest collectors.
+* **Unittest Compatibility**: Suite wrappers (`DocTestSuite` and `DocFileSuite`) designed to integrate with the standard library `unittest` runner.
 
 == Installation
-
-To install `asciidoctest` in your project:
 
 [source,bash]
 ----
@@ -28,7 +26,7 @@ pip install asciidoctest
 
 == Pytest Integration
 
-`asciidoctest` registers a `pytest` plugin automatically. Simply run `pytest` in your project directory:
+`asciidoctest` automatically registers as a `pytest` plugin. Simply execute `pytest` in your project directory:
 
 [source,bash]
 ----
@@ -37,7 +35,7 @@ pytest
 
 === Configuration
 
-You can configure target matching behavior in your `pyproject.toml` or `pytest.ini`:
+You can configure collection behavior in your `pyproject.toml` or `pytest.ini`:
 
 [source,ini]
 ----
@@ -45,7 +43,7 @@ You can configure target matching behavior in your `pyproject.toml` or `pytest.i
 asciidoctest_mode = eager
 ----
 
-Alternatively, you can supply the `--asciidoctest-mode` argument via command line:
+Alternatively, you can supply the `--asciidoctest-mode` flag:
 
 [source,bash]
 ----
@@ -54,7 +52,7 @@ pytest --asciidoctest-mode=eager
 
 == Unittest Integration
 
-If you use the standard library `unittest` package, you can easily load and run tests using `DocFileSuite` or `DocTestSuite`:
+To use the standard library `unittest` package, load tests using `DocFileSuite` or `DocTestSuite`:
 
 [source,python]
 ----
@@ -68,11 +66,13 @@ if __name__ == "__main__":
     unittest.main(defaultTest="suite")
 ----
 
-== Examples (Interactive & Non-Interactive)
+== Examples
 
-Below are simple testable blocks that demonstrate sequential state-sharing and execution.
+Below are standard test blocks demonstrating interactive and script-based execution.
 
-We can run interactive python sessions with expected outputs:
+=== Interactive Session
+
+We can run interactive Python sessions with expected outputs:
 
 [source,python,test]
 ----
@@ -81,7 +81,9 @@ We can run interactive python sessions with expected outputs:
 'ASCIIDOCTEST'
 ----
 
-We can also run non-interactive scripts with standard Python assertions. Note that because they run in the same document, the variable `x` defined above is shared sequentially:
+=== Sequential Script Block
+
+We can run script-based test blocks with standard Python assertions. Because they share execution state sequentially, variables defined in previous blocks are accessible:
 
 [source,python,test]
 ----
@@ -90,7 +92,9 @@ y = len(x)
 assert y == 12
 ----
 
-Standard `doctest` features like ellipsis work perfectly:
+=== Directives Support
+
+Standard `doctest` directives such as `ELLIPSIS` are supported:
 
 [source,python,test]
 ----

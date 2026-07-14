@@ -1,0 +1,29 @@
+= Changelog
+:toc: left
+
+This document lists all notable changes and releases for `asciidocstring`'s sibling package, `asciidoctest`.
+
+== [0.1.0a2] - 2026-07-13
+
+=== Added
+* **Optional test dependencies group**: Added a `[project.optional-dependencies]` section to `pyproject.toml` with a `test` target including `pytest` and `pytest-cov`.
+* **Advanced test coverage validation**: Added robust unit and integration tests covering parser exceptions, doctest unexpected exceptions, and class-level `unittest` TestCase helpers (achieving 97% code coverage).
+* **Footnote macros compatibility verification**: Added a validation suite (`tests/test_footnotes.py`) confirming compatibility with the newly introduced anonymous and named footnotes in the parsing pipeline.
+
+=== Changed
+* **Upgraded dependencies**:
+  - Bumped `asciidoctrine` version requirement to `>=0.1.0a7` to leverage parser newline normalization and native footnotes.
+  - Changed `asciidocstring` version constraint to `>=0.1.0a2`.
+
+=== Fixed
+* **Removed trailing newline workaround**: Cleaned up manual trailing-newline appending in `parser.py`, as standard line termination issues have been natively resolved in the upgraded upstream parser.
+
+---
+
+== [0.1.0a1] - 2026-07-11
+
+=== Added
+* **Initial Release**: Released `asciidoctest` as an alpha utility.
+* **Core sequential runner**: Designed a sequential execution engine supporting variable-state propagation and detailed line mappings.
+* **Pytest integration**: Added file collection hooks and detailed repr-failure reporting.
+* **Unittest integration**: Added standard library `TestSuite` compatibility wrappers (`DocFileSuite` and `DocTestSuite`).
