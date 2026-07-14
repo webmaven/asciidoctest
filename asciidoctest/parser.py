@@ -10,10 +10,6 @@ def parse_adoc_tests(content: str, mode: str = "explicit") -> List[TestBlock]:
     or attribute 'test'.
     If mode is 'eager', extracts all python source blocks.
     """
-    # Ensure trailing newline to avoid lark parsing issues
-    if not content.endswith("\n"):
-        content += "\n"
-        
     try:
         ast = parse_to_ast(content)
     except Exception as e:
