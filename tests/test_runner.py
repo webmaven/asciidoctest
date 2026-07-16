@@ -189,3 +189,19 @@ def test_non_interactive_generic_exception():
     assert "Exception raised in non-interactive block at line 10" in str(exc_info.value)
     assert "TypeError: custom typ_error" in str(exc_info.value)
 
+
+def test_safe_visitor_ignores_non_nodes():
+    from asciidoctest.parser import SafeTestBlockExtractorVisitor
+    visitor = SafeTestBlockExtractorVisitor(target_language="python", requires_test_marker=False)
+    
+    # Passing a raw string or an object without 'name' attribute should be safely ignored and not raise any AttributeError
+    res_str = visitor.visit("raw string child element")
+    assert res_str is None
+    
+    class MockElement:
+        pass
+        
+    res_obj = visitor.visit(MockElement())
+    assert res_obj is None
+
+

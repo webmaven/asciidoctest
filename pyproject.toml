@@ -4,8 +4,8 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "asciidoctest"
-version = "0.1.0a3"
-description = "A Python doctest runner for AsciiDoc documents and docstrings."
+version = "0.1.0a4"
+description = "Doctests and Literate Programming verification with AsciiDoc."
 readme = {file = "README.adoc", content-type = "text/plain"}
 requires-python = ">=3.14"
 license = {text = "Apache-2.0"}
@@ -19,7 +19,7 @@ classifiers = [
 ]
 dependencies = [
     "asciidoctrine>=0.1.0a8",
-    "asciidocstring>=0.1.0a3",
+    "asciidocstring>=0.1.0a4",
     "lark>=1.3.1",
 ]
 
@@ -39,3 +39,10 @@ asciidoctest = "asciidoctest.pytest_plugin"
 [tool.setuptools.packages.find]
 where = ["."]
 include = ["asciidoctest*"]
+
+[tool.pytest.ini_options]
+testpaths = [
+    "tests",
+    "README.adoc",
+]
+

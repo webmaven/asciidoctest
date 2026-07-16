@@ -1,7 +1,19 @@
 = Changelog
 :toc: left
 
-This document lists all notable changes and releases for `asciidocstring`'s sibling package, `asciidoctest`.
+This document lists all notable changes and releases for `asciidoctest`.
+
+== [0.1.0a4] - 2026-07-16
+
+=== Added
+* **Traverser Safety Guard**: Introduced `SafeTestBlockExtractorVisitor` to safely bypass raw strings or child objects without a `.name` attribute during AST traversal, preventing crashes on complex unparsed text blocks.
+* **Pytest Discovery Constraints**: Configured `testpaths` under `[tool.pytest.ini_options]` in `pyproject.toml` to restrict search patterns to `tests/` and `README.adoc`, preventing slow recursive runs over external directories.
+
+=== Changed
+* **Upgraded dependencies**:
+  - Bumped `asciidocstring` requirement to `>=0.1.0a4` to support the latest safe parsing mode releases.
+
+---
 
 == [0.1.0a3] - 2026-07-14
 

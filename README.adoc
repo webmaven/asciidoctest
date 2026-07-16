@@ -1,4 +1,4 @@
-= AsciiDoctest: Python Doctest Runner for AsciiDoc
+= AsciiDoctest: Doctests and Literate Programming Verification with AsciiDoc
 :toc: left
 :idprefix:
 :idseparator: -
@@ -9,9 +9,27 @@ image:https://img.shields.io/badge/python-3.14-blue.svg[Python Version]
 image:https://img.shields.io/badge/coverage-97%25-green.svg[Test Coverage]
 image:https://img.shields.io/badge/License-Apache_2.0-blue.svg[License, link=https://opensource.org/licenses/Apache-2.0]
 
-AsciiDoctest is a Python doctest runner designed to parse, collect, and execute tests from AsciiDoc (`.adoc`) files and Python docstrings. 
+AsciiDoctest is a Literate Programming verification tool and test runner designed to parse, collect, and execute Python code blocks from AsciiDoc (`.adoc`) files and Python docstrings. 
 
 It integrates AST-based parsing using `asciidoctrine` and `asciidocstring` to provide accurate and standard-compliant testing of documentation.
+
+== Why AsciiDoctest?
+
+Traditional doctest extractors rely on fragile regular expressions to parse block structures and find code examples. This approach frequently breaks when encountering inline styles, unparsed attributes, nested lists, or complex block boundaries.
+
+AsciiDoctest solves this by relying on native **Abstract Syntax Tree (AST)** parsing:
+* Leverages full structural documents parsed via `asciidoctrine` and `asciidocstring`.
+* Fully honors standard AsciiDoc roles, positional arguments, attributes, and includes.
+* Maintains high-fidelity source coordinates (line and column mappings) for precise failure reporting.
+
+== Literate Programming Verification
+
+In Donald Knuth's paradigm of **Literate Programming**, a computer program is written as an explanatory narrative in natural language, interspersed with snippets of traditional source code. 
+
+AsciiDoctest brings this paradigm natively to AsciiDoc:
+* **Narrative-Driven Testing**: Rather than maintaining separate test suites and user guides, your documentation *is* your test suite.
+* **Cumulative Sequential State**: Code blocks inside a single document are executed sequentially top-to-bottom and share a single global namespace. A variable or function defined in one block is fully available and modifiable in subsequent blocks.
+* **Verifiable Narratives**: Because execution state accumulates, you can write a continuous, logical story of how an API or library behaves step-by-step. Your documentation is guaranteed to be mathematically and programmatically correct.
 
 == Features
 
@@ -107,3 +125,45 @@ Standard `doctest` directives such as `ELLIPSIS` are supported:
 >>> print("Hello ... World")
 Hello ... World
 ----
+
+== Contributing
+
+We welcome contributions! AsciiDoctest maintains strict quality standards:
+* Fully annotated Python types.
+* Comprehensive unit and integration test coverage kept above **95%**.
+
+To get started on development locally:
+
+1. Clone and set up the virtual environment:
++
+[source,bash]
+----
+git clone https://github.com/webmaven/asciidoctest.git
+cd asciidoctest
+python3 -m venv .venv
+source .venv/bin/activate
+pip install -e ".[test]"
+----
+
+2. Run the test suite:
++
+[source,bash]
+----
+pytest
+----
+
+3. Check code coverage reports:
++
+[source,bash]
+----
+coverage run -m pytest
+coverage report -m
+----
+
+== License
+
+Licensed under the Apache License, Version 2.0 (the "License"). You may obtain a copy of the License at:
+
+link:https://www.apache.org/licenses/LICENSE-2.0[https://www.apache.org/licenses/LICENSE-2.0]
+
+Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the specific language governing permissions and limitations under the License.
