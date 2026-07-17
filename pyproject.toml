@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "asciidoctest"
 version = "0.2.0a1"
-description = "Doctests and Literate Programming verification with AsciiDoc."
+description = "Verifiable, stateful, and interactive documentation with AsciiDoc."
 readme = {file = "README.adoc", content-type = "text/plain"}
 requires-python = ">=3.14"
 license = {text = "Apache-2.0"}

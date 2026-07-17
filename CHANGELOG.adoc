@@ -3,26 +3,26 @@
 
 This document lists all notable changes and releases for `asciidoctest`.
 
-== [0.2.0a1] - 2026-07-16
+== [0.2.0a1] - 2026-07-17
 
 === Added
-* **Unified Symmetric Isolation and Sharing Model**:
+* **Unified Symmetric Namespace and State Model**:
   - Established identical, symmetric execution and namespace isolation rules for both interactive REPL and non-interactive script blocks.
   - **Isolated & Ephemeral (`test`)**: Run in a clean copy of the initial namespace, keeping them fully isolated from subsequent side-effects by default.
   - **Persistent & Stateful (`shared`)**: Run in the sequential shared globals (like a continuous notebook), allowing variables to persist top-to-bottom across both script and interactive blocks.
   - **Ephemeral Copy (`shared, test`)**: Run in a temporary snapshot copy of the shared globals, enabling access to preceding variables while safely discarding local mutations when the block ends.
+  - **No Marker**: Treated as a static listing and skipped by default.
 * **Intelligent `eager` Mode Safety Guard**:
   - In `eager` mode, unmarked listings are only run as isolated `test` blocks if the document contains zero explicit markers. If *any* block in the file has explicit attributes or roles, `eager` mode is bypassed/disabled for that file.
 
+
+=== Refactored
+* **Centralized Block Marker Inspection**:
+  - Refactored internal parsing to centralize block marker extraction (`block_has_test_marker` and `block_has_shared_marker`), eliminating duplication across the parser and runner.
+* **Verifiable Documentation Terminology**:
+  - Re-framed the project documentation and `README.adoc` around verifiable and stateful narrative documentation rather than Literate Programming.
+
 ---
-
-== [0.1.0a5] - 2026-07-16
-
-=== Added
-* **Refined State-Sharing Model**:
-  - Sequential non-interactive script blocks share state sequentially by default.
-  - Interactive doctest blocks are isolated by default using an ephemeral copy of the current global namespace, preventing test side-effects while preserving access to module functions and prior setups.
-  - Added explicit opt-in sharing for interactive blocks using the `shared` attribute or role (e.g., `[source,python,test,shared]`), allowing interactive examples to write back to the shared global namespace.
 
 == [0.1.0a4] - 2026-07-16
 
