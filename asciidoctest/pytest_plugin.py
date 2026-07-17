@@ -3,8 +3,7 @@ import importlib.util
 import sys
 from typing import List, Tuple
 import pytest
-import asciidocstring
-from asciidoctest.parser import parse_adoc_tests
+from asciidoctest.parser import parse_adoc_tests, extract_docstring_tests
 from asciidoctest.runner import run_test_blocks, AsciiDocTestFailure
 
 def pytest_addoption(parser):
@@ -103,12 +102,10 @@ class PythonDocstringFile(pytest.File):
             return
             
         mode = self.config.getoption("--asciidoctest-mode") or self.config.getini("asciidoctest_mode") or "explicit"
-        requires_test_marker = (mode == "explicit")
         
         for name, lineno, docstring in docstrings:
             try:
-                doc_doc = asciidocstring.parse(docstring)
-                tests = doc_doc.extract_tests(language="python", requires_test_marker=requires_test_marker)
+                tests = extract_docstring_tests(docstring, mode=mode)
                 if tests:
                     yield DocstringTestItem.from_parent(
                         self,

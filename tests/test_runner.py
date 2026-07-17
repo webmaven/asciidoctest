@@ -3,7 +3,14 @@ import textwrap
 from asciidoctest.parser import parse_adoc_tests
 from asciidoctest.runner import run_test_blocks, AsciiDocTestFailure
 
-# 1. Test Parsing/Extraction Modes
+class MockBlock:
+    def __init__(self, content, is_interactive=False, line_number=1, attributes=None):
+        self.content = content
+        self.is_interactive = is_interactive
+        self.line_number = line_number
+        self.attributes = attributes or {}
+
+# 1. Test Parsing/Extraction Modes & Eager Mode Bypass
 def test_parse_explicit_mode():
     content = textwrap.dedent("""\
         = Sample Document
@@ -21,20 +28,30 @@ def test_parse_explicit_mode():
         ----
         
         This block should also be run:
-        [.test]
-        [source,python]
+        [source,python,shared]
         ----
         z = 3
         ----
         """)
-    # By default, parse_adoc_tests should be in explicit mode (mode="explicit")
     blocks = parse_adoc_tests(content, mode="explicit")
     assert len(blocks) == 2
     assert "y = 2" in blocks[0].content
     assert "z = 3" in blocks[1].content
 
 
-def test_parse_eager_mode():
+def test_parse_explicit_mode_no_markers_returns_empty():
+    content = textwrap.dedent("""\
+        [source,python]
+        ----
+        x = 1
+        ----
+        """)
+    blocks = parse_adoc_tests(content, mode="explicit")
+    assert blocks == []
+
+
+
+def test_parse_eager_mode_active():
     content = textwrap.dedent("""\
         = Sample Document
         
@@ -44,112 +61,97 @@ def test_parse_eager_mode():
         x = 1
         ----
         
-        This block has test marker:
-        [source,python,test]
+        This block also has no test marker:
+        [source,python]
         ----
         y = 2
         ----
         """)
-    # In eager mode, all python blocks should be parsed
+    # Since there are NO explicit markers anywhere, eager mode extracts all blocks
     blocks = parse_adoc_tests(content, mode="eager")
     assert len(blocks) == 2
     assert "x = 1" in blocks[0].content
     assert "y = 2" in blocks[1].content
 
 
-# 2. Test Interactive Block Execution
-def test_execute_interactive_success():
+def test_parse_eager_mode_disabled_by_explicit_markers():
     content = textwrap.dedent("""\
-        >>> 1 + 1
-        2
-        >>> print("hello")
-        hello
+        = Sample Document
+        
+        This block has no test marker and should be skipped because there is an explicit block elsewhere:
+        [source,python]
+        ----
+        x = 1
+        ----
+        
+        This block has an explicit test marker:
+        [source,python,test]
+        ----
+        y = 2
+        ----
         """)
-    # In our parser, blocks have attributes (like language, is_interactive, etc.)
-    # For unit testing the runner, we can mock or construct simple block objects.
-    class MockBlock:
-        def __init__(self, content, is_interactive=True, line_number=1):
-            self.content = content
-            self.is_interactive = is_interactive
-            self.line_number = line_number
+    # Since there is an explicit marker ("test"), eager mode falls back to explicit and skips the first block
+    blocks = parse_adoc_tests(content, mode="eager")
+    assert len(blocks) == 1
+    assert "y = 2" in blocks[0].content
 
-    blocks = [MockBlock(content, is_interactive=True)]
-    # run_test_blocks should execute the blocks and return success without raising exceptions
-    globals_dict = {}
-    run_test_blocks(blocks, globals_dict)
-    assert "1 + 1" not in globals_dict  # interactive sessions usually don't bleed local vars unless stored, or do they?
-    # Actually, in doctest, interactive executions run in a local scope/globals dict.
-    # Let's verify that a global defined in an interactive block is stored.
-    blocks_state = [
-        MockBlock(">>> x = 42\n", is_interactive=True),
-        MockBlock(">>> x\n42\n", is_interactive=True),
+
+# 2. Test execution of the four semantic cases: Case A, B, C/D
+def test_case_c_test_only_is_isolated_and_ephemeral():
+    # 'test' blocks run in complete isolation ({})
+    blocks = [
+        MockBlock("a = 100", is_interactive=False, attributes={"test": "true"}),
+        # Since the first block ran in complete isolation, 'a' is not defined here
+        MockBlock("assert 'a' not in globals()", is_interactive=False, attributes={"test": "true"}),
     ]
     shared_globals = {}
-    run_test_blocks(blocks_state, shared_globals)
-    assert shared_globals.get("x") == 42
+    run_test_blocks(blocks, shared_globals)
+    assert shared_globals == {}
 
 
-def test_execute_interactive_failure():
-    class MockBlock:
-        def __init__(self, content, is_interactive=True, line_number=10):
-            self.content = content
-            self.is_interactive = is_interactive
-            self.line_number = line_number
+def test_case_b_shared_only_is_read_write_and_persistent():
+    # 'shared' blocks run in persistent, read-write shared globals
+    blocks = [
+        MockBlock("a = 200", is_interactive=False, attributes={"shared": "true"}),
+        MockBlock("b = a + 50", is_interactive=False, attributes={"shared": "true"}),
+        MockBlock(">>> b\n250\n", is_interactive=True, attributes={"shared": "true"}),
+    ]
+    shared_globals = {}
+    run_test_blocks(blocks, shared_globals)
+    assert shared_globals.get("a") == 200
+    assert shared_globals.get("b") == 250
 
-    blocks = [MockBlock(">>> 1 + 1\n5\n", is_interactive=True)]
+
+def test_case_a_shared_and_test_is_ephemeral_copy():
+    # 'shared, test' blocks get an ephemeral copy of the state which is discarded afterwards
+    blocks = [
+        # Setup preceding state
+        MockBlock("a = 500", is_interactive=False, attributes={"shared": "true"}),
+        # This block reads 'a' but its mutations are discarded
+        MockBlock("assert a == 500\nb = a + 100\n", is_interactive=False, attributes={"shared": "true", "test": "true"}),
+        # Confirm that 'b' was NOT written back to shared_globals
+        MockBlock("assert 'b' not in globals()", is_interactive=False, attributes={"shared": "true"}),
+    ]
+    shared_globals = {}
+    run_test_blocks(blocks, shared_globals)
+    assert shared_globals.get("a") == 500
+    assert "b" not in shared_globals
+
+
+def test_interactive_failure_reporting():
+    blocks = [MockBlock(">>> 1 + 1\n5\n", is_interactive=True, line_number=10, attributes={"test": "true"})]
     with pytest.raises(AsciiDocTestFailure) as exc_info:
         run_test_blocks(blocks, {})
     assert "Expected: 5" in str(exc_info.value) or "Expected:\n    5" in str(exc_info.value)
     assert "line 10" in str(exc_info.value)
 
 
-# 3. Test Non-Interactive Block Execution (Script Mode)
-def test_execute_non_interactive_success():
-    class MockBlock:
-        def __init__(self, content, is_interactive=False, line_number=1):
-            self.content = content
-            self.is_interactive = is_interactive
-            self.line_number = line_number
-
-    blocks = [
-        MockBlock("y = [1, 2, 3]\nassert len(y) == 3\n", is_interactive=False)
-    ]
-    shared_globals = {}
-    run_test_blocks(blocks, shared_globals)
-    assert shared_globals.get("y") == [1, 2, 3]
-
-
-def test_execute_non_interactive_failure():
-    class MockBlock:
-        def __init__(self, content, is_interactive=False, line_number=5):
-            self.content = content
-            self.is_interactive = is_interactive
-            self.line_number = line_number
-
-    blocks = [MockBlock("x = 10\nassert x == 20\n", is_interactive=False)]
+def test_non_interactive_failure_reporting():
+    blocks = [MockBlock("x = 10\nassert x == 20\n", is_interactive=False, line_number=5, attributes={"test": "true"})]
     with pytest.raises(AsciiDocTestFailure) as exc_info:
         run_test_blocks(blocks, {})
     assert "AssertionError" in str(exc_info.value)
     assert "line 5" in str(exc_info.value)
-
-
-# 4. Test State Sharing & Namespace Isolation
-def test_state_sharing_across_blocks():
-    class MockBlock:
-        def __init__(self, content, is_interactive=False, line_number=1):
-            self.content = content
-            self.is_interactive = is_interactive
-            self.line_number = line_number
-
-    blocks = [
-        MockBlock("a = 100", is_interactive=False),
-        MockBlock("b = a + 50", is_interactive=False),
-        MockBlock(">>> b\n150", is_interactive=True),
-    ]
-    shared_globals = {}
-    run_test_blocks(blocks, shared_globals)
-    assert shared_globals.get("a") == 100
-    assert shared_globals.get("b") == 150
 
 
 def test_parse_invalid_asciidoc_error():
@@ -161,14 +163,7 @@ def test_parse_invalid_asciidoc_error():
 
 
 def test_interactive_unexpected_exception():
-    class MockBlock:
-        def __init__(self, content, is_interactive=True, line_number=1):
-            self.content = content
-            self.is_interactive = is_interactive
-            self.line_number = line_number
-
-    # This doctest raises an unexpected ZeroDivisionError since no expected output/exception is specified
-    blocks = [MockBlock(">>> 1 / 0\n")]
+    blocks = [MockBlock(">>> 1 / 0\n", is_interactive=True, attributes={"test": "true"})]
     with pytest.raises(AsciiDocTestFailure) as exc_info:
         run_test_blocks(blocks, {})
     assert "Unexpected Exception" in str(exc_info.value)
@@ -176,18 +171,11 @@ def test_interactive_unexpected_exception():
 
 
 def test_non_interactive_generic_exception():
-    class MockBlock:
-        def __init__(self, content, is_interactive=False, line_number=10):
-            self.content = content
-            self.is_interactive = is_interactive
-            self.line_number = line_number
-
-    # Raise a standard TypeError in a non-interactive script block
-    blocks = [MockBlock("raise TypeError('custom typ_error')")]
+    blocks = [MockBlock("raise TypeError('custom error')", is_interactive=False, line_number=10, attributes={"test": "true"})]
     with pytest.raises(AsciiDocTestFailure) as exc_info:
         run_test_blocks(blocks, {})
     assert "Exception raised in non-interactive block at line 10" in str(exc_info.value)
-    assert "TypeError: custom typ_error" in str(exc_info.value)
+    assert "TypeError: custom error" in str(exc_info.value)
 
 
 def test_safe_visitor_ignores_non_nodes():
@@ -204,4 +192,11 @@ def test_safe_visitor_ignores_non_nodes():
     res_obj = visitor.visit(MockElement())
     assert res_obj is None
 
+
+def test_extract_docstring_tests_unparseable_graceful():
+    from asciidoctest.parser import extract_docstring_tests
+    from unittest.mock import patch
+    with patch("asciidocstring.parse", side_effect=Exception("unparseable")):
+        blocks = extract_docstring_tests("some invalid docstring content")
+        assert blocks == []
 

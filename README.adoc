@@ -1,4 +1,4 @@
-= AsciiDoctest: Doctests and Literate Programming Verification with AsciiDoc
+= AsciiDoctest: Verifiable, Stateful, and Interactive Documentation with AsciiDoc
 :toc: left
 :idprefix:
 :idseparator: -
@@ -9,9 +9,9 @@ image:https://img.shields.io/badge/python-3.14-blue.svg[Python Version]
 image:https://img.shields.io/badge/coverage-97%25-green.svg[Test Coverage]
 image:https://img.shields.io/badge/License-Apache_2.0-blue.svg[License, link=https://opensource.org/licenses/Apache-2.0]
 
-AsciiDoctest is a Literate Programming verification tool and test runner designed to parse, collect, and execute Python code blocks from AsciiDoc (`.adoc`) files and Python docstrings. 
+AsciiDoctest is an executable documentation runner and narrative testing tool designed to parse, collect, and verify Python code blocks directly from AsciiDoc (`.adoc`) files and Python docstrings. 
 
-It integrates AST-based parsing using `asciidoctrine` and `asciidocstring` to provide accurate and standard-compliant testing of documentation.
+It integrates AST-based parsing using `asciidoctrine` and `asciidocstring` to provide accurate, standard-compliant testing of your documentation's code examples.
 
 == Why AsciiDoctest?
 
@@ -22,22 +22,32 @@ AsciiDoctest solves this by relying on native **Abstract Syntax Tree (AST)** par
 * Fully honors standard AsciiDoc roles, positional arguments, attributes, and includes.
 * Maintains high-fidelity source coordinates (line and column mappings) for precise failure reporting.
 
-== Literate Programming Verification
+== Executable Documentation State Models
 
-In Donald Knuth's paradigm of **Literate Programming**, a computer program is written as an explanatory narrative in natural language, interspersed with snippets of traditional source code. 
+Writing a multi-step tutorial, interactive guide, or documentation book often requires code examples that build on top of each other. At the same time, writers need the ability to run isolated one-off checks or explore alternative paths without leaking state.
 
-AsciiDoctest brings this paradigm natively to AsciiDoc:
-* **Narrative-Driven Testing**: Rather than maintaining separate test suites and user guides, your documentation *is* your test suite.
-* **Cumulative Sequential State**: Code blocks inside a single document are executed sequentially top-to-bottom and share a single global namespace. A variable or function defined in one block is fully available and modifiable in subsequent blocks.
-* **Verifiable Narratives**: Because execution state accumulates, you can write a continuous, logical story of how an API or library behaves step-by-step. Your documentation is guaranteed to be mathematically and programmatically correct.
+AsciiDoctest provides a unified, symmetric state model across both interactive REPL blocks and non-interactive script blocks to facilitate predictable, stateful documentation.
+
+A Python code block is considered **marked** when it contains the `test` or `shared` keyword inside its block header—either as a positional argument (e.g., `[source,python,test]`), an explicit attribute (e.g., `[source,python,test="true"]`), or a block role (e.g., `[source,python,role="shared"]`).
+
+Based on these markers, blocks are executed under the following models:
+
+* **No Marker or Attribute**: Treated as an ordinary, non-executable code listing.
+
+  - *Exception*: In `eager` mode, unmarked listings are executed as `test` blocks (fully isolated and ephemeral) ONLY if no block in the entire document has any explicit markers of either sort.
+* **`test` (Isolated & Ephemeral)**: Runs in a completely clean, isolated namespace (`{}`). Any variables or state changes created during its execution are immediately discarded. This aligns with standard unit-testing isolation principles.
+* **`shared` (Read-Write & Persistent)**: Participates in a continuous, stateful document timeline (like a stateful notebook). Any classes, variables, or functions defined in early `shared` blocks are fully accessible and modifiable in subsequent `shared` blocks.
+* **`shared, test` (Ephemeral Copy)**: Gets access to a read-only copy of the shared state *at that point in the document*, but any mutations or local bindings created within the block are discarded when the block completes.
+
+This model is extremely consistent, easy to reason about, and ensures that your documentation's code examples are always accurate and tested.
+
 
 == Features
 
 * **AST-Based Parsing**: Structural parsing using `asciidoctrine` (AsciiDoc parser) and `asciidocstring` (AsciiDoc docstring parser).
 * **Execution Modes**:
-  - `explicit` (default): Only executes blocks with the `test` attribute or role (e.g., `[source,python,test]` or `[.test]\n[source,python]`).
-  - `eager`: Executes all `[source,python]` code blocks across the document.
-* **Shared State**: Within a single AsciiDoc document, subsequent blocks share execution state sequentially top-to-bottom. Execution state is completely isolated between separate files.
+  - `explicit` (default): Only executes blocks with the `test` or `shared` markers.
+  - `eager`: Falls back to executing all `[source,python]` listings as isolated `test` blocks, but only if the document contains zero explicit markers.
 * **Pytest Integration**: Automatic discovery and execution of `.adoc` files and Python docstrings via registered pytest collectors.
 * **Unittest Compatibility**: Suite wrappers (`DocTestSuite` and `DocFileSuite`) designed to integrate with the standard library `unittest` runner.
 
@@ -96,9 +106,9 @@ Below are standard test blocks demonstrating interactive and script-based execut
 
 === Interactive Session
 
-We can run interactive Python sessions with expected outputs:
+We can run interactive Python sessions with expected outputs. We mark this block with `[source,python,shared]` to allow this interactive block's setup state (`x`) to be persisted for subsequent blocks:
 
-[source,python,test]
+[source,python,shared]
 ----
 >>> x = "asciidoctest"
 >>> x.upper()
@@ -107,9 +117,9 @@ We can run interactive Python sessions with expected outputs:
 
 === Sequential Script Block
 
-We can run script-based test blocks with standard Python assertions. Because they share execution state sequentially, variables defined in previous blocks are accessible:
+We can run script-based test blocks with standard Python assertions. Since they share the same continuous narrative namespace, variables defined in previous `[source,python,shared]` blocks are accessible. We mark this block with `[source,python,shared]`:
 
-[source,python,test]
+[source,python,shared]
 ----
 assert x == "asciidoctest"
 y = len(x)
@@ -118,13 +128,42 @@ assert y == 12
 
 === Directives Support
 
-Standard `doctest` directives such as `ELLIPSIS` are supported:
+Standard `doctest` directives such as `ELLIPSIS` are supported. We mark this block with `[source,python,test]` so that it is independent and runs with a clean, isolated namespace:
+
 
 [source,python,test]
 ----
->>> print("Hello ... World")
-Hello ... World
+>>> print(x)
+Traceback (most recent call last):
+    ...
+NameError: name 'x' is not defined
+>>> x = "Hello, beautiful world!"
+>>> print(x)
+Hello, ... world!
 ----
+
+=== Ephemeral Copy of Shared State
+
+We can grant a test block access to an ephemeral copy of the accumulated shared state at that point in the document. Any modifications made within the block are discarded afterwards. We mark this block with `[source,python,shared,test]`:
+
+[source,python,shared,test]
+----
+>>> print(x)
+asciidoctest
+>>> x = "Hello, beautiful world!"
+>>> print(x)
+Hello, ... world!
+----
+
+To demonstrate that the changes in the `shared, test` block were indeed discarded and did not modify the persistent shared namespace, a subsequent `[source,python,shared]` block shows that `x` remains unchanged:
+
+[source,python,shared]
+----
+>>> print(x)
+asciidoctest
+----
+
+
 
 == Contributing
 

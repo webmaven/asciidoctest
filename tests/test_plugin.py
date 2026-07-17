@@ -66,6 +66,45 @@ def test_python_docstring_collection(pytester):
     result.assert_outcomes(passed=1, failed=0)
 
 
+def test_python_docstring_collection_eager_mode(pytester):
+    py_content = textwrap.dedent("""\
+        def compute():
+            \"\"\"
+            [source,python]
+            ----
+            assert 1 + 1 == 3
+            ----
+            \"\"\"
+            pass
+        """)
+    pytester.makepyfile(module=py_content)
+    result = pytester.runpytest("-v", "--asciidoctest-mode=eager")
+    result.assert_outcomes(passed=0, failed=1)
+    assert "AssertionError" in result.stdout.str()
+
+
+def test_python_docstring_collection_eager_mode_disabled_by_explicit(pytester):
+    py_content = textwrap.dedent("""\
+        def compute():
+            \"\"\"
+            [source,python]
+            ----
+            assert 1 + 1 == 3
+            ----
+            
+            [source,python,test]
+            ----
+            assert 2 + 2 == 4
+            ----
+            \"\"\"
+            pass
+        """)
+    pytester.makepyfile(module=py_content)
+    result = pytester.runpytest("-v", "--asciidoctest-mode=eager")
+    result.assert_outcomes(passed=1, failed=0)
+
+
+
 def test_adoc_failure_reporting(pytester):
     adoc_content = textwrap.dedent("""\
         = Doc

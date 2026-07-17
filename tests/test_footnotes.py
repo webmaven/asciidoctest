@@ -5,7 +5,9 @@ from asciidoctest.runner import run_test_blocks
 
 def test_footnotes_parsing_and_execution():
     # Construct an AsciiDoc document with anonymous and named footnotes,
-    # as well as standard interactive and non-interactive python test blocks.
+    # as well as standard sequential python test blocks.
+    # Under our symmetric state model, both blocks are marked with 'shared'
+    # to form a persistent, sequential execution timeline.
     content = textwrap.dedent("""\
         = Footnotes Test Document
         
@@ -13,14 +15,14 @@ def test_footnotes_parsing_and_execution():
         Here is another reference to a named footnote footnoteref:[fn1, This is a named footnote.].
         And here is a second reference to the same named footnote footnoteref:[fn1].
         
-        [source,python,test]
+        [source,python,shared]
         ----
         >>> x = "footnote tested"
         >>> x
         'footnote tested'
         ----
         
-        [source,python,test]
+        [source,python,shared]
         ----
         assert x == "footnote tested"
         ----

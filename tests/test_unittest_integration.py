@@ -199,3 +199,76 @@ class TestUnittestIntegration(unittest.TestCase):
         finally:
             sys.modules.pop(module_name, None)
 
+
+    def test_doc_file_suite_eager_mode(self):
+        # Create an unmarked .adoc file which runs in eager mode and fails
+        adoc_content = textwrap.dedent("""\
+            = Temp Doc
+            
+            [source,python]
+            ----
+            assert 2 + 2 == 5
+            ----
+            """)
+        with tempfile.NamedTemporaryFile(suffix=".adoc", mode="w", delete=False) as f:
+            f.write(adoc_content)
+            filepath = f.name
+            
+        try:
+            suite = DocFileSuite(filepath, mode="eager")
+            result = unittest.TestResult()
+            suite.run(result)
+            self.assertEqual(result.testsRun, 1)
+            self.assertEqual(len(result.failures), 1)
+        finally:
+            pathlib.Path(filepath).unlink(missing_ok=True)
+
+
+    def test_doc_test_suite_eager_mode(self):
+        module_name = "unittest_eager_module"
+        mod = types.ModuleType(module_name)
+        mod.__doc__ = textwrap.dedent("""\
+            [source,python]
+            ----
+            assert 1 + 1 == 3
+            ----
+            """)
+        sys.modules[module_name] = mod
+        try:
+            # Under eager mode with no explicit blocks, the unmarked block is run and fails
+            suite = DocTestSuite(mod, mode="eager")
+            result = unittest.TestResult()
+            suite.run(result)
+            self.assertEqual(result.testsRun, 1)
+            self.assertEqual(len(result.failures), 1)
+        finally:
+            sys.modules.pop(module_name, None)
+
+
+    def test_doc_test_suite_eager_mode_disabled_by_explicit(self):
+        module_name = "unittest_eager_bypass_module"
+        mod = types.ModuleType(module_name)
+        mod.__doc__ = textwrap.dedent("""\
+            [source,python]
+            ----
+            assert 1 + 1 == 3
+            ----
+            
+            [source,python,test]
+            ----
+            assert 2 + 2 == 4
+            ----
+            """)
+        sys.modules[module_name] = mod
+        try:
+            # Eager mode is bypassed/disabled because there is an explicit test block,
+            # so only the explicit test block runs and passes!
+            suite = DocTestSuite(mod, mode="eager")
+            result = unittest.TestResult()
+            suite.run(result)
+            self.assertEqual(result.testsRun, 1)
+            self.assertEqual(len(result.failures), 0)
+        finally:
+            sys.modules.pop(module_name, None)
+
+

@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "asciidoctest"
-version = "0.1.0a4"
+version = "0.2.0a1"
 description = "Doctests and Literate Programming verification with AsciiDoc."
 readme = {file = "README.adoc", content-type = "text/plain"}
 requires-python = ">=3.14"

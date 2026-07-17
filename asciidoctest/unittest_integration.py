@@ -2,9 +2,8 @@ import unittest
 import sys
 import pathlib
 import inspect
-import asciidocstring
 from typing import List, Any, Dict
-from asciidoctest.parser import parse_adoc_tests
+from asciidoctest.parser import parse_adoc_tests, extract_docstring_tests
 from asciidoctest.runner import run_test_blocks
 
 class AsciiDocTestCase(unittest.TestCase):
@@ -80,7 +79,6 @@ def DocTestSuite(module, **kwargs) -> unittest.TestSuite:
     Creates a unittest.TestSuite for running AsciiDoc docstring tests from a module.
     """
     mode = kwargs.get("mode", "explicit")
-    requires_test_marker = (mode == "explicit")
     
     if isinstance(module, str):
         if module in sys.modules:
@@ -101,8 +99,7 @@ def DocTestSuite(module, **kwargs) -> unittest.TestSuite:
         docstring = inspect.getdoc(obj)
         if docstring:
             try:
-                doc_doc = asciidocstring.parse(docstring)
-                tests = doc_doc.extract_tests(language="python", requires_test_marker=requires_test_marker)
+                tests = extract_docstring_tests(docstring, mode=mode)
                 if tests:
                     # Capture current module globals dict
                     test_case = DocstringTestCase(
