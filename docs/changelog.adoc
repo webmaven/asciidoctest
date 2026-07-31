@@ -1,0 +1,29 @@
+= Changelog
+:toc: left
+:idprefix:
+:idseparator: -
+
+This document catalogs release history and updates for `asciidoctest`.
+
+== link:https://pypi.org/project/asciidoctest/0.2.0a2/[0.2.0a2] - 2026-07-21
+
+=== Changed
+* **Upgraded Dependencies**:
+  - Upgraded `asciidoctrine` requirement to `>=0.1.0a11` to support configurable custom URI schemes, bare URL and email autolink features, list continuations, and Post-AST syntax checks.
+  - Upgraded `asciidocstring` requirement to `>=0.1.0a6`.
+* **Documentation & Theme**:
+  - Published multi-page documentation website using `sphinx_rtd_theme` customized with AsciiDoctrine's forest-green dark theme.
+
+== link:https://pypi.org/project/asciidoctest/0.2.0a1/[0.2.0a1] - 2026-07-17
+
+=== Added
+* **Unified Symmetric Namespace and State Model**:
+  - Established symmetric execution rules for REPL and script blocks (`test`, `shared`, `shared, test`).
+* **Intelligent `eager` Mode Safety Guard**:
+  - Bypasses `eager` fallback when explicit markers exist.
+
+== link:https://pypi.org/project/asciidoctest/0.1.0a4/[0.1.0a4] - 2026-07-16
+
+=== Added
+* **Traverser Safety Guard**: `SafeTestBlockExtractorVisitor`.
+* **Pytest Discovery Constraints**: Restricted discovery to `tests/` and `README.adoc`.

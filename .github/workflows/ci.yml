@@ -1,4 +1,4 @@
-name: CI
+name: CI & Documentation Deployment
 
 on:
   push:
@@ -6,8 +6,17 @@ on:
   pull_request:
     branches: [ main ]
 
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: "pages"
+  cancel-in-progress: false
+
 jobs:
-  test:
+  test-and-lint:
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -26,9 +35,50 @@ jobs:
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
-        pip install -e ".[test]"
+        pip install -e ".[test,docs]"
 
-    - name: Run test suite and check coverage
+    - name: Check code formatting & linting (Ruff)
+      run: |
+        ruff check .
+        ruff format --check .
+
+    - name: Run static type checking (Mypy)
+      run: |
+        mypy asciidoctest
+
+    - name: Run test suite and check coverage (Pytest)
       run: |
         coverage run -m pytest
         coverage report -m
+
+  build-and-deploy-docs:
+    needs: test-and-lint
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: "3.14"
+        cache: 'pip'
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -e ".[test,docs]"
+
+    - name: Build Sphinx Documentation
+      run: |
+        sphinx-build -b html docs/ docs/_build/html
+        touch docs/_build/html/.nojekyll
+
+    - name: Upload Pages Artifact
+      uses: actions/upload-pages-artifact@v3
+      with:
+        path: docs/_build/html
+
+    - name: Deploy to GitHub Pages
+      if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+      id: deployment
+      uses: actions/deploy-pages@v4

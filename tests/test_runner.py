@@ -1,7 +1,10 @@
-import pytest
 import textwrap
+
+import pytest
+
 from asciidoctest.parser import parse_adoc_tests
-from asciidoctest.runner import run_test_blocks, AsciiDocTestFailure
+from asciidoctest.runner import AsciiDocTestFailure, run_test_blocks
+
 
 class MockBlock:
     def __init__(self, content, is_interactive=False, line_number=1, attributes=None):
@@ -194,8 +197,9 @@ def test_safe_visitor_ignores_non_nodes():
 
 
 def test_extract_docstring_tests_unparseable_graceful():
-    from asciidoctest.parser import extract_docstring_tests
     from unittest.mock import patch
+
+    from asciidoctest.parser import extract_docstring_tests
     with patch("asciidocstring.parse", side_effect=Exception("unparseable")):
         blocks = extract_docstring_tests("some invalid docstring content")
         assert blocks == []

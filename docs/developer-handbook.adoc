@@ -1,0 +1,88 @@
+= Developer Handbook
+:toc: left
+:idprefix:
+:idseparator: -
+
+This document serves as the developer handbook and architectural specification for link:https://github.com/webmaven/asciidoctest[`asciidoctest`].
+
+== Codebase Architecture
+
+`asciidoctest` extracts and verifies code blocks from link:https://asciidoc.org/[AsciiDoc] (`.adoc`) files and link:https://www.python.org/[Python] docstrings.
+
+=== Component Overview
+
+[source,mermaid]
+----
+graph TD
+    A[Source Files: .adoc, .py] --> B[pytest_plugin / unittest_integration]
+    B --> C[parser.py]
+    C --> D[asciidoctrine / asciidocstring]
+    D --> E[TestBlock List]
+    E --> F[runner.py]
+    F --> G[CustomDocTestRunner / exec]
+----
+
+* **`parser.py`**: Extracts test blocks using link:https://github.com/webmaven/asciidoctrine[`asciidoctrine`] (for standalone documents) and link:https://github.com/webmaven/asciidocstring[`asciidocstring`] (for Python docstrings). Supports `explicit` (default) and `eager` matching.
+* **`runner.py`**: Coordinates execution. Interactive prompts are evaluated via `doctest.DocTestParser` and a custom `doctest.DocTestRunner` subclass. Non-interactive blocks are compiled and run via `exec()`. State is shared sequentially top-to-bottom across consecutive blocks inside a single standalone document.
+* **`pytest_plugin.py`**: Discovers files statically, collects docstrings from Python modules without executing code during discovery, and handles test execution and error formatting for link:https://docs.pytest.org/[pytest].
+* **`unittest_integration.py`**: Wraps test collection and execution in standard library link:https://docs.python.org/3/library/unittest.html[unittest] adapters (`DocFileSuite` and `DocTestSuite`).
+
+== Testing and Coverage
+
+* **`tests/test_runner.py`**: Tests runner mechanics and state persistence.
+* **`tests/test_plugin.py`**: Validates basic pytest collection.
+* **`tests/test_plugin_coverage.py`**: Tests error boundaries and collection failures.
+* **`tests/test_unittest_integration.py`**: Tests unittest adapters.
+* **`tests/test_footnotes.py`**: Verifies footnote compatibility.
+
+=== Coverage Measurement
+
+[source,bash]
+----
+$ .venv/bin/coverage run -m pytest
+$ .venv/bin/coverage report -m
+----
+
+== Pre-Release Checklist
+
+=== 1. Dependency Audit
+* [ ] Verify that constraints in `pyproject.toml` are correctly aligned with the latest stable dependency releases.
+* [ ] Ensure `asciidocstring` points to stable pre-release/release versions (e.g. `>=0.1.0a2`), avoiding premature or yanked releases.
+
+=== 2. Code Quality and Style
+* [ ] Format code using link:https://github.com/astral-sh/ruff[Ruff] code style checker (`ruff check` and `ruff format`).
+* [ ] Run static type checking via link:https://mypy-lang.org/[mypy] to ensure type-safety across all modules.
+
+=== 3. Verification Suite
+* [ ] Install the package in editable mode with test and documentation dependencies:
++
+[source,bash]
+----
+$ .venv/bin/pip install -e ".[test,docs]"
+----
+* [ ] Run the complete test suite:
++
+[source,bash]
+----
+$ .venv/bin/pytest
+----
+* [ ] Measure code coverage and confirm that coverage remains above 95% total:
++
+[source,bash]
+----
+$ .venv/bin/coverage run -m pytest
+$ .venv/bin/coverage report
+----
+
+=== 4. Documentation Check
+* [ ] Confirm that all examples inside `README.adoc` pass successfully under our self-verifying test suite.
+* [ ] Update `CHANGELOG.adoc` to catalog the latest changes, additions, and fixed bugs under the appropriate release version header.
+
+=== 5. Publishing Preparation
+* [ ] Update the `version` field in `pyproject.toml`.
+* [ ] Run build checks to generate clean source and wheel distributions:
++
+[source,bash]
+----
+$ .venv/bin/python3 -m build
+----

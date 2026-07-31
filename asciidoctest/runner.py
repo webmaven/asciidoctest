@@ -1,13 +1,12 @@
 import doctest
-import io
 import traceback
-from typing import List, Dict, Any
-from asciidocstring.visitors import TestBlock
-from asciidoctest.parser import block_has_test_marker, block_has_shared_marker
+from typing import Any
+
+from asciidoctest.parser import block_has_shared_marker, block_has_test_marker
+
 
 class AsciiDocTestFailure(AssertionError):
     """Exception raised when an asciidoc test block execution fails."""
-    pass
 
 class CustomDocTestRunner(doctest.DocTestRunner):
     """A customized doctest runner that gathers failures in-memory."""
@@ -31,7 +30,7 @@ class CustomDocTestRunner(doctest.DocTestRunner):
         )
         self.test_failures.append((example, exc_info, msg))
 
-def run_test_blocks(blocks: List[Any], shared_globals: Dict[str, Any]) -> None:
+def run_test_blocks(blocks: list[Any], shared_globals: dict[str, Any]) -> None:
     """
     Executes a sequence of test blocks under a unified, symmetric state model.
     
@@ -108,13 +107,13 @@ def run_test_blocks(blocks: List[Any], shared_globals: Dict[str, Any]) -> None:
                     # For script blocks, since test_globals is shared_globals,
                     # updates are already written back. But we can ensure it.
                     pass
-            except AssertionError as ae:
+            except AssertionError:
                 tb = traceback.format_exc()
                 raise AsciiDocTestFailure(
                     f"Assertion failed in non-interactive block at line {block.line_number}:\n{tb}"
-                )
-            except Exception as e:
+                ) from None
+            except Exception:
                 tb = traceback.format_exc()
                 raise AsciiDocTestFailure(
                     f"Exception raised in non-interactive block at line {block.line_number}:\n{tb}"
-                )
+                ) from None

@@ -1,14 +1,16 @@
-import unittest
-import sys
-import pathlib
 import inspect
-from typing import List, Any, Dict
-from asciidoctest.parser import parse_adoc_tests, extract_docstring_tests
+import pathlib
+import sys
+import unittest
+from typing import Any
+
+from asciidoctest.parser import extract_docstring_tests, parse_adoc_tests
 from asciidoctest.runner import run_test_blocks
+
 
 class AsciiDocTestCase(unittest.TestCase):
     """TestCase representing sequential execution of test blocks in an .adoc file."""
-    def __init__(self, name: str, blocks: List[Any], description: str = ""):
+    def __init__(self, name: str, blocks: list[Any], description: str = ""):
         super().__init__()
         self._name = name
         self._blocks = blocks
@@ -30,7 +32,7 @@ class AsciiDocTestCase(unittest.TestCase):
 
 class DocstringTestCase(unittest.TestCase):
     """TestCase representing execution of Python docstring tests in module scope."""
-    def __init__(self, name: str, blocks: List[Any], module_globals: Dict[str, Any], description: str = ""):
+    def __init__(self, name: str, blocks: list[Any], module_globals: dict[str, Any], description: str = ""):
         super().__init__()
         self._name = name
         self._blocks = blocks

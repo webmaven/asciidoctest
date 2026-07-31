@@ -1,5 +1,5 @@
-import pytest
 import textwrap
+
 
 def test_adoc_collection_explicit_mode(pytester):
     # Create an .adoc file with one marked test and one unmarked

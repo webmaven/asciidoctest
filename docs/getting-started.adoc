@@ -1,0 +1,64 @@
+= Getting Started
+:toc: left
+:idprefix:
+:idseparator: -
+
+This guide covers package installation, test discovery configuration, and integration with test runners.
+
+== Installation
+
+Install link:https://pypi.org/project/asciidoctest/[`asciidoctest`] via pip:
+
+[source,bash]
+----
+pip install asciidoctest
+----
+
+To install with development and documentation dependencies:
+
+[source,bash]
+----
+pip install -e ".[test,docs]"
+----
+
+== Pytest Integration
+
+`asciidoctest` registers automatically as a link:https://docs.pytest.org/[pytest] plugin. Running `pytest` discovers `.adoc` files and docstrings in your workspace.
+
+[source,bash]
+----
+pytest
+----
+
+=== Pytest Configuration
+
+Configure collection options in `pyproject.toml` or `pytest.ini`:
+
+[source,ini]
+----
+[pytest]
+asciidoctest_mode = eager
+----
+
+Or specify the flag on the command line:
+
+[source,bash]
+----
+pytest --asciidoctest-mode=eager
+----
+
+== Unittest Integration
+
+To use `asciidoctest` with standard library link:https://docs.python.org/3/library/unittest.html[unittest], wrap files or modules using `DocFileSuite` or `DocTestSuite`:
+
+[source,python]
+----
+import unittest
+from asciidoctest import DocFileSuite
+
+def suite():
+    return DocFileSuite("README.adoc")
+
+if __name__ == "__main__":
+    unittest.main(defaultTest="suite")
+----

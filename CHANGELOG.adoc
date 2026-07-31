@@ -3,6 +3,17 @@
 
 This document lists all notable changes and releases for `asciidoctest`.
 
+== [0.2.0a2] - 2026-07-21
+
+=== Changed
+* **Upgraded Dependencies**:
+  - Upgraded `asciidoctrine` dependency constraint to `>=0.1.0a11` to leverage configurable custom URI schemes, bare URL and email autolink features, list continuations, and Post-AST syntax checks.
+  - Upgraded `asciidocstring` dependency constraint to `>=0.1.0a6`.
+* **Documentation & Styling**:
+  - Published multi-page HTML documentation site using `sphinx_rtd_theme` styled with AsciiDoctrine's forest-green dark theme overrides.
+
+---
+
 == [0.2.0a1] - 2026-07-17
 
 === Added

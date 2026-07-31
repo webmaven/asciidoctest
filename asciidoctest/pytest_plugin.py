@@ -1,10 +1,12 @@
 import ast
 import importlib.util
 import sys
-from typing import List, Tuple
+
 import pytest
-from asciidoctest.parser import parse_adoc_tests, extract_docstring_tests
-from asciidoctest.runner import run_test_blocks, AsciiDocTestFailure
+
+from asciidoctest.parser import extract_docstring_tests, parse_adoc_tests
+from asciidoctest.runner import AsciiDocTestFailure, run_test_blocks
+
 
 def pytest_addoption(parser):
     """Register custom command-line and ini configuration options."""
@@ -36,7 +38,7 @@ def pytest_collect_file(file_path, parent):
             pass
     return None
 
-def find_docstrings_in_py_file(path) -> List[Tuple[str, int, str]]:
+def find_docstrings_in_py_file(path) -> list[tuple[str, int, str]]:
     """Statically parse a Python file and return all docstrings with metadata."""
     content = path.read_text("utf-8")
     try:

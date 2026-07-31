@@ -1,7 +1,8 @@
-import pytest
 import textwrap
+
 from asciidoctest.parser import parse_adoc_tests
 from asciidoctest.runner import run_test_blocks
+
 
 def test_footnotes_parsing_and_execution():
     # Construct an AsciiDoc document with anonymous and named footnotes,

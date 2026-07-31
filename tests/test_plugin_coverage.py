@@ -1,5 +1,3 @@
-import pytest
-import textwrap
 
 def test_plugin_unparseable_asciidoc_collection(pytester):
     # Create file with invalid/unparseable adoc structure to trigger collection Exception

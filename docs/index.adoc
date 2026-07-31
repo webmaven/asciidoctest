@@ -1,0 +1,29 @@
+= AsciiDoctest Documentation
+:toc: left
+:idprefix:
+:idseparator: -
+
+Welcome to the official documentation for **link:https://github.com/webmaven/asciidoctest[AsciiDoctest]** — the executable documentation runner and narrative testing tool for link:https://asciidoc.org/[AsciiDoc] (`.adoc`) files and link:https://www.python.org/[Python] docstrings.
+
+[toctree, %hidden]
+--
+getting-started
+state-models
+developer-handbook
+changelog
+--
+
+== Overview
+
+AsciiDoctest parses Python code blocks directly from AsciiDoc documents and Python docstrings using AST-based parsing powered by link:https://github.com/webmaven/asciidoctrine[asciidoctrine] and link:https://github.com/webmaven/asciidocstring[asciidocstring].
+
+* **Verifiable Code Examples**: Keep tutorials, user guides, and docstrings continuously verified.
+* **Symmetric Execution Models**: Predictable state handling (`test`, `shared`, and `shared, test`) across interactive REPL sessions and non-interactive scripts.
+* **Seamless Integration**: Built-in support for link:https://docs.pytest.org/[pytest] automatic test collection and standard library link:https://docs.python.org/3/library/unittest.html[unittest] suite adapters.
+
+== Documentation Sections
+
+* xref:getting-started.adoc[Getting Started] — Package installation, pytest configuration, and unittest integration.
+* xref:state-models.adoc[Executable State Models] — Deep dive into isolated, persistent shared, and ephemeral copy execution namespaces.
+* xref:developer-handbook.adoc[Developer Handbook] — Architecture overview, test suite design, and pre-release verification checklist.
+* xref:changelog.adoc[Changelog] — Comprehensive historical release notes and version updates.

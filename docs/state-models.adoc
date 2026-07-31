@@ -1,0 +1,69 @@
+= Executable State Models
+:toc: left
+:idprefix:
+:idseparator: -
+
+AsciiDoctest provides a unified, symmetric state model across interactive REPL blocks and non-interactive script blocks.
+
+== Defining Marked Blocks
+
+A block is marked by specifying `test` or `shared` in its block header:
+* Positional argument: `[source,python,shared]`
+* Explicit attribute: `[source,python,test="true"]`
+* Role attribute: `[source,python,role="test"]`
+
+== State Models Overview
+
+* **No Marker**: Ordinary static code listing (not executed, unless in `eager` fallback mode on unmarked documents).
+* **`test` (Isolated & Ephemeral)**: Executed in a fresh, clean namespace (`{}`). Any local variables or mutations are discarded after the block finishes.
+* **`shared` (Read-Write & Persistent)**: Participates in a continuous document-level shared global namespace (like a notebook). Variables and definitions persist top-to-bottom across subsequent `shared` blocks.
+* **`shared, test` (Ephemeral Copy)**: Inherits a snapshot copy of the shared state up to that point, but any mutations made inside the block are discarded when the block completes.
+
+== Examples
+
+=== Interactive REPL Block with Shared State
+
+[source,python,shared]
+----
+>>> x = "asciidoctest"
+>>> x.upper()
+'ASCIIDOCTEST'
+----
+
+=== Subsequent Script Block Accessing Shared State
+
+[source,python,shared]
+----
+assert x == "asciidoctest"
+y = len(x)
+assert y == 12
+----
+
+=== Isolated Test Block
+
+[source,python,test]
+----
+>>> print(x)
+Traceback (most recent call last):
+    ...
+NameError: name 'x' is not defined
+----
+
+=== Ephemeral Copy Block (`shared, test`)
+
+[source,python,shared,test]
+----
+>>> print(x)
+asciidoctest
+>>> x = "modified value"
+>>> print(x)
+modified value
+----
+
+=== Confirming Shared State Untouched
+
+[source,python,shared]
+----
+>>> print(x)
+asciidoctest
+----

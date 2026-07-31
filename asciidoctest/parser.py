@@ -1,7 +1,9 @@
-from typing import Any, List
+from typing import Any
+
 import asciidocstring
+from asciidocstring.visitors import TestBlock, TestBlockExtractorVisitor
 from asciidoctrine.lark_parser import parse_to_ast
-from asciidocstring.visitors import TestBlockExtractorVisitor, TestBlock
+
 
 class SafeTestBlockExtractorVisitor(TestBlockExtractorVisitor):
     """
@@ -41,7 +43,7 @@ def block_has_shared_marker(block: Any) -> bool:
         or ("shared" in str(attrs.get("role", "")).split())
     )
 
-def parse_adoc_tests(content: str, mode: str = "explicit") -> List[TestBlock]:
+def parse_adoc_tests(content: str, mode: str = "explicit") -> list[TestBlock]:
     """
     Parses AsciiDoc source string and extracts python test blocks under
     a unified, symmetric safety-first design.
@@ -80,7 +82,7 @@ def parse_adoc_tests(content: str, mode: str = "explicit") -> List[TestBlock]:
             return all_blocks
         return []
 
-def extract_docstring_tests(docstring: str, mode: str = "explicit") -> List[Any]:
+def extract_docstring_tests(docstring: str, mode: str = "explicit") -> list[Any]:
     """
     Parses a Python docstring and extracts its test blocks, honoring
     the exact same eager-mode safety-first constraints as parse_adoc_tests.

@@ -25,3 +25,6 @@ egg-info/
 .vscode/
 .idea/
 .DS_Store
+
+# Sphinx build output
+docs/_build/

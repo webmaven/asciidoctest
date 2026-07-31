@@ -1,10 +1,12 @@
-import unittest
-import tempfile
 import pathlib
 import sys
-import types
+import tempfile
 import textwrap
+import types
+import unittest
+
 from asciidoctest.unittest_integration import DocFileSuite, DocTestSuite
+
 
 def sample_func():
     """
@@ -106,7 +108,10 @@ class TestUnittestIntegration(unittest.TestCase):
 
 
     def test_test_case_helper_metadata_and_formatting(self):
-        from asciidoctest.unittest_integration import AsciiDocTestCase, DocstringTestCase
+        from asciidoctest.unittest_integration import (
+            AsciiDocTestCase,
+            DocstringTestCase,
+        )
         
         # 1. Verify AsciiDocTestCase helpers
         file_case_with_desc = AsciiDocTestCase("FileTest_1", [], "Custom Description")
@@ -154,7 +159,6 @@ class TestUnittestIntegration(unittest.TestCase):
                 200
                 ----
                 """
-                pass
                 
         # Class with invalid docstring to trigger exception handling bypass
         class InvalidDocClass:
@@ -164,7 +168,6 @@ class TestUnittestIntegration(unittest.TestCase):
             Unparsable!
             ----
             """
-            pass
 
         # Set correct module ownership
         AdvancedSampleClass.__module__ = module_name

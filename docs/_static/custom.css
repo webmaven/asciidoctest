@@ -1,0 +1,145 @@
+/* Custom styles to override Read the Docs theme with a premium dark green theme */
+
+/* Sidebar search background and header */
+.wy-side-nav-search {
+    background-color: #1b4332 !important;
+}
+
+/* Sidebar header title/link at the top of the sidebar */
+.wy-side-nav-search > a, 
+.wy-side-nav-search > a:visited,
+.wy-side-nav-search .icon-home {
+    color: #ffffff !important;
+}
+.wy-side-nav-search > a:hover {
+    color: #e8f5e9 !important;
+    background-color: transparent !important;
+}
+
+/* 
+ * 1. General and unselected sidebar links (L1 level on dark sidebar background)
+ */
+.wy-menu-vertical a,
+.wy-menu-vertical a:visited,
+.wy-menu-vertical li.toctree-l1 > a,
+.wy-menu-vertical li.toctree-l1 > a:visited {
+    color: #e2e8f0 !important; /* High-contrast light slate/white */
+    background-color: transparent !important;
+    font-weight: normal !important;
+}
+
+/* Hover state for any unselected first-level links */
+.wy-menu-vertical a:hover,
+.wy-menu-vertical li.toctree-l1 > a:hover {
+    color: #ffffff !important;
+    background-color: #2d6a4f !important; /* Deep forest green hover highlight */
+}
+
+/* 
+ * 2. Active section parent / ancestor navigation links (expanded path)
+ */
+.wy-menu-vertical li.current > a:not(.current),
+.wy-menu-vertical li.current > a:not(.current):visited {
+    color: #ffffff !important;
+    font-weight: bold !important;
+    background-color: #204c35 !important; /* Rich subtle dark forest background */
+}
+
+/* 
+ * 3. Nested sub-page section links (on the theme's default light grey background)
+ * This prevents white links from disappearing against the light grey sub-menu background.
+ */
+.wy-menu-vertical li.current ul a,
+.wy-menu-vertical li.current ul a:visited,
+.wy-menu-vertical li.toctree-l2 > a,
+.wy-menu-vertical li.toctree-l2 > a:visited,
+.wy-menu-vertical li.toctree-l3 > a,
+.wy-menu-vertical li.toctree-l3 > a:visited,
+.wy-menu-vertical li.toctree-l4 > a,
+.wy-menu-vertical li.toctree-l4 > a:visited {
+    color: #374151 !important; /* Highly readable dark slate grey for perfect contrast */
+    background-color: transparent !important;
+    font-weight: normal !important;
+}
+
+/* Hover state for any nested sub-page links */
+.wy-menu-vertical li.current ul a:hover,
+.wy-menu-vertical li.toctree-l2 > a:hover,
+.wy-menu-vertical li.toctree-l3 > a:hover,
+.wy-menu-vertical li.toctree-l4 > a:hover {
+    color: #ffffff !important;
+    background-color: #2d6a4f !important; /* Deep forest green hover highlight */
+}
+
+/* 
+ * 4. The actual currently active first-level page link (The Leaf!)
+ */
+.wy-menu-vertical li.toctree-l1 > a.current,
+.wy-menu-vertical li.toctree-l1 > a.current:visited {
+    background-color: #e8f5e9 !important;
+    border-right: 4px solid #2d6a4f !important;
+    color: #1b4332 !important; /* Premium dark green text for perfect readability on light green */
+    font-weight: bold !important;
+}
+.wy-menu-vertical li.toctree-l1 > a.current:hover {
+    background-color: #c8e6c9 !important;
+    color: #112d1b !important;
+}
+
+/* 
+ * 5. Nested active sub-page section headers (same page anchors)
+ */
+.wy-menu-vertical li.toctree-l2 a.current,
+.wy-menu-vertical li.toctree-l2 a.current:visited,
+.wy-menu-vertical li.toctree-l3 a.current,
+.wy-menu-vertical li.toctree-l3 a.current:visited,
+.wy-menu-vertical li.toctree-l4 a.current,
+.wy-menu-vertical li.toctree-l4 a.current:visited {
+    background-color: #f1f8f3 !important; /* Lighter green background for nested page anchors */
+    border-right: 3px solid #2d6a4f !important;
+    color: #2d6a4f !important; /* Forest green text */
+    font-weight: normal !important;
+}
+.wy-menu-vertical li.toctree-l2 a.current:hover,
+.wy-menu-vertical li.toctree-l3 a.current:hover,
+.wy-menu-vertical li.toctree-l4 a.current:hover {
+    background-color: #e8f5e9 !important;
+    color: #1b4332 !important;
+}
+
+/* Global Link Colors */
+a, a:visited {
+    color: #2d6a4f !important;
+    text-decoration: none;
+}
+a:hover, a:active {
+    color: #1b4332 !important;
+    text-decoration: underline;
+}
+
+/* Top bar navigation breadcrumbs */
+.wy-breadcrumbs li a {
+    color: #2d6a4f !important;
+}
+.wy-breadcrumbs li a:hover {
+    color: #1b4332 !important;
+}
+
+/* Buttons and primary color highlights */
+.btn-neutral {
+    background-color: #e8f5e9 !important;
+    color: #1b4332 !important;
+    border-color: #c8e6c9 !important;
+}
+.btn-neutral:hover {
+    background-color: #c8e6c9 !important;
+    color: #1b4332 !important;
+}
+
+/* Admonition blocks (Note, Tip, Important, Warning, Caution override to green borders) */
+.admonition.note, .admonition.todo {
+    border-left-color: #2d6a4f !important;
+}
+.admonition.note .admonition-title, .admonition.todo .admonition-title {
+    background-color: #2d6a4f !important;
+}
