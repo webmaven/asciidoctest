@@ -1,0 +1,44 @@
+= Security Policy
+
+:toc: left
+:idprefix:
+:idseparator: -
+
+== Supported Versions
+
+Security updates are actively provided for the following versions of `asciidoctest`:
+
+[cols="1,2,1",options="header"]
+|===
+| Version | Supported | Notes
+| `0.2.x` | Yes | Active development branch
+| `< 0.2.0` | No | Please upgrade to the latest pre-release/release
+|===
+
+== Executable Documentation Security Context
+
+`asciidoctest` parses and executes Python code blocks embedded within AsciiDoc (`.adoc`) files and Python docstrings. 
+
+[WARNING]
+====
+Executing untrusted `.adoc` files or Python source code can result in arbitrary code execution within the context and permissions of the user running `asciidoctest` or `pytest`. 
+
+Only run `asciidoctest` on trusted input files or within isolated sandbox environments (such as containerized CI workflows).
+====
+
+== Reporting a Vulnerability
+
+We take the security of `asciidoctest` seriously. If you discover a security vulnerability, please report it responsibly rather than opening a public issue.
+
+=== Reporting Steps
+
+1. **Email Notification**: Send a detailed security report to the maintainer via GitHub security advisories or directly to the project maintainer.
+2. **Details to Include**:
+   * A clear description of the vulnerability and potential impact.
+   * Proof-of-concept (PoC) code or steps to reproduce the issue.
+   * Any suggested remediations or patches, if available.
+3. **Response Time**: We will acknowledge receipt of your report within 48 hours and provide a timeline for investigation and resolution.
+
+=== Public Disclosure
+
+Please allow reasonable time for the issue to be addressed before making a public disclosure. Once a fix is released, we will publish a security advisory detailing the vulnerability, impact, and fixed versions.

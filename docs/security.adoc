@@ -1,0 +1,38 @@
+= Security Policy
+:toc: left
+:idprefix:
+:idseparator: -
+
+This document describes the security model, supported versions, and vulnerability reporting procedures for link:https://github.com/webmaven/asciidoctest[`asciidoctest`].
+
+== Supported Versions
+
+Security updates are actively provided for the following versions:
+
+[cols="1,2,1",options="header"]
+|===
+| Version | Supported | Notes
+| `0.2.x` | Yes | Active development branch
+| `< 0.2.0` | No | Please upgrade to the latest pre-release/release
+|===
+
+== Executable Documentation Security Context
+
+`asciidoctest` parses and executes Python code blocks embedded within link:https://asciidoc.org/[AsciiDoc] (`.adoc`) files and link:https://www.python.org/[Python] docstrings.
+
+[WARNING]
+====
+Executing untrusted `.adoc` files or Python source code can result in arbitrary code execution within the context and permissions of the user running `asciidoctest` or `pytest`.
+
+Only run `asciidoctest` on trusted input files or within isolated sandbox environments (such as containerized CI workflows).
+====
+
+== Reporting a Vulnerability
+
+We take security seriously. If you discover a vulnerability, please report it responsibly rather than opening a public GitHub issue.
+
+=== Reporting Procedure
+
+1. Submit a private vulnerability report via link:https://github.com/webmaven/asciidoctest/security/advisories/new[GitHub Security Advisories].
+2. Include a detailed description, reproduction steps or PoC, and potential impact.
+3. We will acknowledge receipt within 48 hours and work with you to coordinate a resolution and advisory.

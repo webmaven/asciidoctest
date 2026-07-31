@@ -11,6 +11,7 @@ getting-started
 state-models
 developer-handbook
 changelog
+security
 --
 
 == Overview
@@ -26,4 +27,5 @@ AsciiDoctest parses Python code blocks directly from AsciiDoc documents and Pyth
 * xref:getting-started.adoc[Getting Started] — Package installation, pytest configuration, and unittest integration.
 * xref:state-models.adoc[Executable State Models] — Deep dive into isolated, persistent shared, and ephemeral copy execution namespaces.
 * xref:developer-handbook.adoc[Developer Handbook] — Architecture overview, test suite design, and pre-release verification checklist.
+* xref:security.adoc[Security Policy] — Supported versions, execution safety context, and vulnerability reporting.
 * xref:changelog.adoc[Changelog] — Comprehensive historical release notes and version updates.

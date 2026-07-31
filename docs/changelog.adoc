@@ -5,7 +5,11 @@
 
 This document catalogs release history and updates for `asciidoctest`.
 
-== link:https://pypi.org/project/asciidoctest/0.2.0a2/[0.2.0a2] - 2026-07-21
+== link:https://pypi.org/project/asciidoctest/0.2.0a2/[0.2.0a2] - 2026-07-31
+
+=== Added
+* **Security Policy & Documentation**:
+  - Added `SECURITY.adoc` and dedicated Sphinx `security.adoc` page detailing execution safety rules and vulnerability reporting processes.
 
 === Changed
 * **Upgraded Dependencies**:

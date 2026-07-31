@@ -166,37 +166,40 @@ asciidoctest
 
 == Contributing
 
-We welcome contributions! AsciiDoctest maintains strict quality standards:
+We welcome contributions to link:https://github.com/webmaven/asciidoctest[AsciiDoctest]! Please review our link:https://github.com/webmaven/asciidoctest/blob/main/SECURITY.adoc[Security Policy] before running untrusted code blocks during development.
+
+AsciiDoctest maintains strict quality standards:
+
 * Fully annotated link:https://www.python.org/[Python] types checked via link:https://mypy-lang.org/[mypy].
 * Code formatting and linting verified with link:https://github.com/astral-sh/ruff[Ruff].
 * Comprehensive unit and integration test coverage kept above **95%**.
 
 To get started on development locally:
 
-1. Clone and set up the virtual environment:
+1. Clone the repository and set up the virtual environment:
 +
 [source,bash]
 ----
-git clone https://github.com/webmaven/asciidoctest.git
-cd asciidoctest
-python3 -m venv .venv
-source .venv/bin/activate
-pip install -e ".[test,docs]"
+$ git clone https://github.com/webmaven/asciidoctest.git
+$ cd asciidoctest
+$ python3 -m venv .venv
+$ source .venv/bin/activate
+$ pip install -e ".[test,docs]"
 ----
 
-2. Run the test suite:
+2. Run the complete test suite:
 +
 [source,bash]
 ----
-pytest
+$ pytest
 ----
 
 3. Check code coverage reports:
 +
 [source,bash]
 ----
-coverage run -m pytest
-coverage report -m
+$ coverage run -m pytest
+$ coverage report -m
 ----
 
 == License

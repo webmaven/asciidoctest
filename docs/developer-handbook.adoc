@@ -3,7 +3,9 @@
 :idprefix:
 :idseparator: -
 
-This document serves as the developer handbook and architectural specification for link:https://github.com/webmaven/asciidoctest[`asciidoctest`].
+This document serves as the developer handbook, contribution guide, and architectural specification for link:https://github.com/webmaven/asciidoctest[`asciidoctest`].
+
+We warmly welcome contributions of all kinds! Whether you are fixing a bug, adding new features, improving documentation, or proposing design enhancements, this handbook will guide you through our codebase architecture, testing conventions, and contribution workflows. Please review our link:https://github.com/webmaven/asciidoctest/blob/main/SECURITY.adoc[Security Policy] before running untrusted code blocks during local development.
 
 == Codebase Architecture
 
@@ -76,6 +78,7 @@ $ .venv/bin/coverage report
 
 === 4. Documentation Check
 * [ ] Confirm that all examples inside `README.adoc` pass successfully under our self-verifying test suite.
+* [ ] Review `SECURITY.adoc` and `docs/security.adoc` to ensure supported versions and reporting guidelines are up to date.
 * [ ] Update `CHANGELOG.adoc` to catalog the latest changes, additions, and fixed bugs under the appropriate release version header.
 
 === 5. Publishing Preparation

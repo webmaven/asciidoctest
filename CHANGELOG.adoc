@@ -3,7 +3,11 @@
 
 This document lists all notable changes and releases for `asciidoctest`.
 
-== [0.2.0a2] - 2026-07-21
+== [0.2.0a2] - 2026-07-31
+
+=== Added
+* **Security Policy & Documentation**:
+  - Added `SECURITY.adoc` and dedicated Sphinx `security.adoc` page outlining execution safety context, supported version matrix, and responsible disclosure workflow.
 
 === Changed
 * **Upgraded Dependencies**:
