@@ -104,7 +104,6 @@ def test_python_docstring_collection_eager_mode_disabled_by_explicit(pytester):
     result.assert_outcomes(passed=1, failed=0)
 
 
-
 def test_adoc_failure_reporting(pytester):
     adoc_content = textwrap.dedent("""\
         = Doc

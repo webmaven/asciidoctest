@@ -16,7 +16,8 @@ def sample_func():
     'ok'
     ----
     """
-    return 'ok'
+    return "ok"
+
 
 class TestUnittestIntegration(unittest.TestCase):
     def test_doc_file_suite_success(self):
@@ -33,11 +34,11 @@ class TestUnittestIntegration(unittest.TestCase):
         with tempfile.NamedTemporaryFile(suffix=".adoc", mode="w", delete=False) as f:
             f.write(adoc_content)
             filepath = f.name
-            
+
         try:
             suite = DocFileSuite(filepath)
             self.assertIsInstance(suite, unittest.TestSuite)
-            
+
             # Run the suite
             result = unittest.TestResult()
             suite.run(result)
@@ -46,7 +47,6 @@ class TestUnittestIntegration(unittest.TestCase):
             self.assertEqual(len(result.errors), 0)
         finally:
             pathlib.Path(filepath).unlink(missing_ok=True)
-
 
     def test_doc_file_suite_failure(self):
         # Create a temporary .adoc file with failing test
@@ -61,7 +61,7 @@ class TestUnittestIntegration(unittest.TestCase):
         with tempfile.NamedTemporaryFile(suffix=".adoc", mode="w", delete=False) as f:
             f.write(adoc_content)
             filepath = f.name
-            
+
         try:
             suite = DocFileSuite(filepath)
             result = unittest.TestResult()
@@ -70,7 +70,6 @@ class TestUnittestIntegration(unittest.TestCase):
             self.assertEqual(len(result.failures), 1)
         finally:
             pathlib.Path(filepath).unlink(missing_ok=True)
-
 
     def test_doc_test_suite_success(self):
         # Dynamically create a module with passing docstring tests
@@ -90,11 +89,11 @@ class TestUnittestIntegration(unittest.TestCase):
         sample_func.__module__ = module_name
         mod.sample_func = sample_func
         sys.modules[module_name] = mod
-        
+
         try:
             suite = DocTestSuite(mod)
             self.assertIsInstance(suite, unittest.TestSuite)
-            
+
             result = unittest.TestResult()
             suite.run(result)
             # Should have found 2 docstrings with tests: module-level and sample_func-level
@@ -106,42 +105,45 @@ class TestUnittestIntegration(unittest.TestCase):
             # Restore original __module__ to avoid breaking subsequent runs or collections
             sample_func.__module__ = "tests.test_unittest_integration"
 
-
     def test_test_case_helper_metadata_and_formatting(self):
         from asciidoctest.unittest_integration import (
             AsciiDocTestCase,
             DocstringTestCase,
         )
-        
+
         # 1. Verify AsciiDocTestCase helpers
         file_case_with_desc = AsciiDocTestCase("FileTest_1", [], "Custom Description")
         self.assertEqual(file_case_with_desc.id(), "FileTest_1")
         self.assertEqual(file_case_with_desc.shortDescription(), "Custom Description")
         self.assertIn("FileTest_1", str(file_case_with_desc))
-        
+
         file_case_no_desc = AsciiDocTestCase("FileTest_2", [])
         self.assertEqual(file_case_no_desc.shortDescription(), "FileTest_2")
-        
+
         # 2. Verify DocstringTestCase helpers
-        string_case_with_desc = DocstringTestCase("StringTest_1", [], {}, "Custom Docstring Description")
+        string_case_with_desc = DocstringTestCase(
+            "StringTest_1", [], {}, "Custom Docstring Description"
+        )
         self.assertEqual(string_case_with_desc.id(), "StringTest_1")
-        self.assertEqual(string_case_with_desc.shortDescription(), "Custom Docstring Description")
+        self.assertEqual(
+            string_case_with_desc.shortDescription(), "Custom Docstring Description"
+        )
         self.assertIn("StringTest_1", str(string_case_with_desc))
-        
+
         string_case_no_desc = DocstringTestCase("StringTest_2", [], {})
         self.assertEqual(string_case_no_desc.shortDescription(), "StringTest_2")
-
 
     def test_doc_test_suite_edge_cases(self):
         # 1. Create a dynamic module with advanced features
         module_name = "advanced_edgecase_module"
         mod = types.ModuleType(module_name)
-        mod.__doc__ = "" # empty docstring
-        
+        mod.__doc__ = ""  # empty docstring
+
         # Import an external routine to trigger the module membership filter continue condition
         from os import path
+
         mod.path = path
-        
+
         # Class with methods to cover class method parsing and nested routines
         class AdvancedSampleClass:
             """
@@ -151,6 +153,7 @@ class TestUnittestIntegration(unittest.TestCase):
             True
             ----
             """
+
             def nested_method(self):
                 """
                 [source,python,test]
@@ -159,7 +162,7 @@ class TestUnittestIntegration(unittest.TestCase):
                 200
                 ----
                 """
-                
+
         # Class with invalid docstring to trigger exception handling bypass
         class InvalidDocClass:
             """
@@ -173,24 +176,24 @@ class TestUnittestIntegration(unittest.TestCase):
         AdvancedSampleClass.__module__ = module_name
         AdvancedSampleClass.nested_method.__module__ = module_name
         InvalidDocClass.__module__ = module_name
-        
+
         # Assign to dynamic module
         mod.AdvancedSampleClass = AdvancedSampleClass
         mod.InvalidDocClass = InvalidDocClass
-        
+
         # Create a duplicated reference (alias) to the class to trigger discovery filter
         mod.AdvancedSampleClassAlias = AdvancedSampleClass
-        
+
         sys.modules[module_name] = mod
-        
+
         try:
             # 2. Test importing module by string name
             suite = DocTestSuite(module_name)
             self.assertIsInstance(suite, unittest.TestSuite)
-            
+
             result = unittest.TestResult()
             suite.run(result)
-            
+
             # Should have found exactly 2 valid test cases:
             # - AdvancedSampleClass docstring test
             # - nested_method docstring test
@@ -201,7 +204,6 @@ class TestUnittestIntegration(unittest.TestCase):
             self.assertEqual(len(result.failures), 0)
         finally:
             sys.modules.pop(module_name, None)
-
 
     def test_doc_file_suite_eager_mode(self):
         # Create an unmarked .adoc file which runs in eager mode and fails
@@ -216,7 +218,7 @@ class TestUnittestIntegration(unittest.TestCase):
         with tempfile.NamedTemporaryFile(suffix=".adoc", mode="w", delete=False) as f:
             f.write(adoc_content)
             filepath = f.name
-            
+
         try:
             suite = DocFileSuite(filepath, mode="eager")
             result = unittest.TestResult()
@@ -225,7 +227,6 @@ class TestUnittestIntegration(unittest.TestCase):
             self.assertEqual(len(result.failures), 1)
         finally:
             pathlib.Path(filepath).unlink(missing_ok=True)
-
 
     def test_doc_test_suite_eager_mode(self):
         module_name = "unittest_eager_module"
@@ -246,7 +247,6 @@ class TestUnittestIntegration(unittest.TestCase):
             self.assertEqual(len(result.failures), 1)
         finally:
             sys.modules.pop(module_name, None)
-
 
     def test_doc_test_suite_eager_mode_disabled_by_explicit(self):
         module_name = "unittest_eager_bypass_module"
@@ -273,5 +273,3 @@ class TestUnittestIntegration(unittest.TestCase):
             self.assertEqual(len(result.failures), 0)
         finally:
             sys.modules.pop(module_name, None)
-
-

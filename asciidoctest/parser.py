@@ -10,10 +10,12 @@ class SafeTestBlockExtractorVisitor(TestBlockExtractorVisitor):
     A robust subclass of TestBlockExtractorVisitor that safely handles raw strings
     or other non-Node elements encountered during generic AST traversal.
     """
+
     def visit(self, node: Any, **kwargs: Any) -> Any:
         if isinstance(node, str) or not hasattr(node, "name"):
             return None
         return super().visit(node, **kwargs)
+
 
 def block_has_test_marker(block: Any) -> bool:
     """
@@ -29,6 +31,7 @@ def block_has_test_marker(block: Any) -> bool:
         or ("test" in str(attrs.get("role", "")).split())
     )
 
+
 def block_has_shared_marker(block: Any) -> bool:
     """
     Inspects a block's attributes, roles, and positional parameters
@@ -43,17 +46,18 @@ def block_has_shared_marker(block: Any) -> bool:
         or ("shared" in str(attrs.get("role", "")).split())
     )
 
+
 def parse_adoc_tests(content: str, mode: str = "explicit") -> list[TestBlock]:
     """
     Parses AsciiDoc source string and extracts python test blocks under
     a unified, symmetric safety-first design.
-    
+
     Rule 1 (Default): If no attributes/markers are specified, the listing is skipped
                       (unless in 'eager' mode, which behaves like 'test').
     Rule 2 ('test'): Executable but completely isolated ({}) and ephemeral.
     Rule 3 ('shared'): Executable and completely read-write and persistent.
     Rule 4 ('shared, test'): Executable with an ephemeral copy of shared state.
-    
+
     Constraint: 'eager' mode DOES NOT work if ANY block in the document has
                 explicit attributes or roles of either 'test' or 'shared'.
     """
@@ -61,17 +65,19 @@ def parse_adoc_tests(content: str, mode: str = "explicit") -> list[TestBlock]:
         ast = parse_to_ast(content)
     except Exception as e:
         raise ValueError(f"AsciiDoc Parse Error: {e}") from e
-        
+
     # Always extract all blocks to inspect their explicit attributes/roles
-    visitor = SafeTestBlockExtractorVisitor(target_language="python", requires_test_marker=False)
+    visitor = SafeTestBlockExtractorVisitor(
+        target_language="python", requires_test_marker=False
+    )
     all_blocks = visitor.extract(ast)
-    
+
     # Helper to check if a block has explicit 'test' or 'shared' markers
     def has_explicit_markers(block: Any) -> bool:
         return block_has_test_marker(block) or block_has_shared_marker(block)
 
     any_explicit = any(has_explicit_markers(b) for b in all_blocks)
-    
+
     if any_explicit:
         # Eager mode is bypassed/disabled when any block has explicit markers.
         # Only return the explicitly marked blocks.
@@ -82,6 +88,7 @@ def parse_adoc_tests(content: str, mode: str = "explicit") -> list[TestBlock]:
             return all_blocks
         return []
 
+
 def extract_docstring_tests(docstring: str, mode: str = "explicit") -> list[Any]:
     """
     Parses a Python docstring and extracts its test blocks, honoring
@@ -91,16 +98,16 @@ def extract_docstring_tests(docstring: str, mode: str = "explicit") -> list[Any]
         doc_doc = asciidocstring.parse(docstring)
     except Exception:
         return []
-        
+
     # Always extract all python blocks first
     all_blocks = doc_doc.extract_tests(language="python", requires_test_marker=False)
-    
+
     # Helper to check if a block has explicit 'test' or 'shared' markers
     def has_explicit_markers(block: Any) -> bool:
         return block_has_test_marker(block) or block_has_shared_marker(block)
 
     any_explicit = any(has_explicit_markers(b) for b in all_blocks)
-    
+
     if any_explicit:
         # Eager mode is bypassed/disabled. Only return the explicitly marked blocks.
         return [b for b in all_blocks if has_explicit_markers(b)]

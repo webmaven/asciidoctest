@@ -10,6 +10,7 @@ from asciidoctest.runner import run_test_blocks
 
 class AsciiDocTestCase(unittest.TestCase):
     """TestCase representing sequential execution of test blocks in an .adoc file."""
+
     def __init__(self, name: str, blocks: list[Any], description: str = ""):
         super().__init__()
         self._name = name
@@ -32,7 +33,14 @@ class AsciiDocTestCase(unittest.TestCase):
 
 class DocstringTestCase(unittest.TestCase):
     """TestCase representing execution of Python docstring tests in module scope."""
-    def __init__(self, name: str, blocks: list[Any], module_globals: dict[str, Any], description: str = ""):
+
+    def __init__(
+        self,
+        name: str,
+        blocks: list[Any],
+        module_globals: dict[str, Any],
+        description: str = "",
+    ):
         super().__init__()
         self._name = name
         self._blocks = blocks
@@ -60,7 +68,7 @@ def DocFileSuite(*paths, **kwargs) -> unittest.TestSuite:
     """
     mode = kwargs.get("mode", "explicit")
     suite = unittest.TestSuite()
-    
+
     for path_str in paths:
         path = pathlib.Path(path_str)
         content = path.read_text("utf-8")
@@ -69,10 +77,10 @@ def DocFileSuite(*paths, **kwargs) -> unittest.TestSuite:
             test_case = AsciiDocTestCase(
                 name=f"DocFile_{path.stem}",
                 blocks=blocks,
-                description=f"AsciiDoc tests from {path.name}"
+                description=f"AsciiDoc tests from {path.name}",
             )
             suite.addTest(test_case)
-            
+
     return suite
 
 
@@ -81,7 +89,7 @@ def DocTestSuite(module, **kwargs) -> unittest.TestSuite:
     Creates a unittest.TestSuite for running AsciiDoc docstring tests from a module.
     """
     mode = kwargs.get("mode", "explicit")
-    
+
     if isinstance(module, str):
         if module in sys.modules:
             mod = sys.modules[module]
@@ -89,15 +97,15 @@ def DocTestSuite(module, **kwargs) -> unittest.TestSuite:
             mod = __import__(module, globals(), locals(), ["*"])
     else:
         mod = module
-        
+
     suite = unittest.TestSuite()
     discovered = set()
-    
+
     def process_object(name: str, obj: Any):
         if obj in discovered:
             return
         discovered.add(obj)
-        
+
         docstring = inspect.getdoc(obj)
         if docstring:
             try:
@@ -108,7 +116,7 @@ def DocTestSuite(module, **kwargs) -> unittest.TestSuite:
                         name=f"Docstring_{name}",
                         blocks=tests,
                         module_globals=mod.__dict__,
-                        description=f"Docstring tests for {name}"
+                        description=f"Docstring tests for {name}",
                     )
                     suite.addTest(test_case)
             except Exception:
@@ -116,18 +124,20 @@ def DocTestSuite(module, **kwargs) -> unittest.TestSuite:
 
     # Process the module docstring
     process_object(mod.__name__, mod)
-    
+
     # Process members of the module
     for attr_name, member in inspect.getmembers(mod):
         # Keep only objects belonging to this module
         if hasattr(member, "__module__") and member.__module__ != mod.__name__:
             continue
-            
+
         if inspect.isclass(member):
             process_object(f"{mod.__name__}.{attr_name}", member)
-            for sub_name, sub_member in inspect.getmembers(member, predicate=inspect.isroutine):
+            for sub_name, sub_member in inspect.getmembers(
+                member, predicate=inspect.isroutine
+            ):
                 process_object(f"{mod.__name__}.{attr_name}.{sub_name}", sub_member)
         elif inspect.isroutine(member):
             process_object(f"{mod.__name__}.{attr_name}", member)
-            
+
     return suite

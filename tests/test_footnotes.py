@@ -28,11 +28,11 @@ def test_footnotes_parsing_and_execution():
         assert x == "footnote tested"
         ----
         """)
-        
+
     # Verify that the parser extracts both blocks perfectly under the upgraded asciidoctrine
     blocks = parse_adoc_tests(content, mode="explicit")
     assert len(blocks) == 2
-    
+
     # Run the test blocks to confirm seamless sequential execution
     shared_globals = {}
     run_test_blocks(blocks, shared_globals)
