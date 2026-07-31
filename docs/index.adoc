@@ -10,17 +10,49 @@ Welcome to the official documentation for **link:https://github.com/webmaven/asc
 getting-started
 state-models
 developer-handbook
-changelog
 security
+changelog
 --
 
-== Overview
+== What is AsciiDoctest?
 
-AsciiDoctest parses Python code blocks directly from AsciiDoc documents and Python docstrings using AST-based parsing powered by link:https://github.com/webmaven/asciidoctrine[asciidoctrine] and link:https://github.com/webmaven/asciidocstring[asciidocstring].
+AsciiDoctest parses, collects, and verifies Python code blocks directly from AsciiDoc (`.adoc`) documents and Python docstrings. It uses AST-based structural parsing powered by link:https://github.com/webmaven/asciidoctrine[asciidoctrine] and link:https://github.com/webmaven/asciidocstring[asciidocstring] to ensure that your tutorials, user guides, and docstrings remain continuously accurate and verified against your codebase.
 
-* **Verifiable Code Examples**: Keep tutorials, user guides, and docstrings continuously verified.
-* **Symmetric Execution Models**: Predictable state handling (`test`, `shared`, and `shared, test`) across interactive REPL sessions and non-interactive scripts.
-* **Seamless Integration**: Built-in support for link:https://docs.pytest.org/[pytest] automatic test collection and standard library link:https://docs.python.org/3/library/unittest.html[unittest] suite adapters.
+== Why Doctests?
+
+Traditional software testing separates test code from documentation, leading to a common problem: *documentation rot*. As APIs evolve, code examples in tutorials and docstrings quietly break.
+
+Executable doctests solve this by turning documentation into verifiable test suites:
+
+* *Eliminate Documentation Rot* — Every code example in your guides and docstrings is automatically executed and validated during CI/CD.
+* *Literate Programming* — Write executable narrative guides where documentation and test cases share a single source of truth.
+* *Build Trust* — Give users complete confidence that every tutorial step and example in your documentation actually works as written.
+
+== Why AsciiDoc?
+
+In the Python ecosystem, documentation has historically been split between *reStructuredText (reST)* for Sphinx docs/docstrings and *Markdown* for lightweight READMEs. AsciiDoc provides a modern, production-grade alternative that combines technical depth with readable syntax:
+
+* *Overcoming reStructuredText Complexity* — While reST is powerful, its syntax is notoriously brittle—strict whitespace indentation rules, awkward double-backtick code markup (`code`), and verbose directive blocks (`code-block`). AsciiDoc offers equal or superior document architecture with clean, human-friendly markup (`[source,python]`).
+* *Beyond Markdown's Structural Limits* — Markdown lacks standardized syntax for block attributes, callouts, complex tables, cross-references, and modular document includes (`include::[]`). AsciiDoc supports all of these natively without relying on non-standard parser extensions or raw HTML.
+* *First-Class Block Attributes & Roles* — AsciiDoc provides built-in attribute syntax (e.g., `[source,python,shared]` or `[source,python,test]`) that cleanly attaches execution metadata to code blocks without cluttering narrative text or breaking rendering.
+
+== Why AsciiDoctest?
+
+Standard Python `doctest` extractors rely on regex-based string matching, which fails when encountering complex markup, nested list blocks, callout annotations, or custom attributes.
+
+AsciiDoctest was designed specifically to bring robust, AST-level testing to AsciiDoc:
+
+* *AST-Based Precision* — Leverages link:https://github.com/webmaven/asciidoctrine[asciidoctrine] and link:https://github.com/webmaven/asciidocstring[asciidocstring] to parse true document syntax trees. It correctly preserves source coordinates (line/column numbers), block boundaries, and nested elements without fragile regex heuristics.
+* *Symmetric Execution State Models* — Provides a unified, predictable state model (`test` for isolated execution, `shared` for stateful step-by-step notebook guides, and `shared, test` for ephemeral snapshots) across both interactive REPL (`>>>`) and non-interactive script blocks.
+* *Native Ecosystem Integration* — Seamlessly connects to modern Python test runners via a link:https://docs.pytest.org/[pytest] discovery collector and standard library link:https://docs.python.org/3/library/unittest.html[unittest] suite adapters (`DocFileSuite`, `DocTestSuite`).
+
+== Key Features
+
+* *AST-Based Docstring & Document Parsing* — Extracts test blocks using full document syntax trees.
+* *Flexible Execution Modes*:
+  - `explicit` (default): Only executes blocks with `test` or `shared` markers.
+  - `eager`: Automatically tests all `[source,python]` listings as isolated blocks when no explicit markers exist in the document.
+* *Comprehensive Test Runner Support* — Direct integration with `pytest` and `unittest`.
 
 == Documentation Sections
 
