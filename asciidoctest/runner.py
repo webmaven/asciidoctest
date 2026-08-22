@@ -2,7 +2,12 @@ import doctest
 import traceback
 from typing import Any
 
-from asciidoctest.parser import block_has_shared_marker, block_has_test_marker
+from asciidoctest.parser import (
+    block_get_shared_context,
+    block_has_reset_marker,
+    block_has_shared_marker,
+    block_has_test_marker,
+)
 
 
 class AsciiDocTestFailure(AssertionError):
@@ -36,40 +41,54 @@ class CustomDocTestRunner(doctest.DocTestRunner):
 def run_test_blocks(blocks: list[Any], shared_globals: dict[str, Any]) -> None:
     """
     Executes a sequence of test blocks under a unified, symmetric state model.
-
-    1. 'test' only: Completely isolated (runs in a copy of initial_globals) and ephemeral.
-    2. 'shared' only: Completely read-write and persistent in shared_globals.
-    3. 'shared, test': Ephemeral copy of shared state (read-only snapshot at that point).
+    Supports section boundaries, named context scopes, and explicit reset markers.
     """
     optionflags = doctest.ELLIPSIS | doctest.IGNORE_EXCEPTION_DETAIL
-
-    # Capture a copy of the initial state at the start of document/docstring execution.
-    # This allows 'test' only blocks to access pre-populated globals (like module-level scope
-    # containing functions under test) while keeping them fully isolated from other blocks.
     initial_globals = shared_globals.copy()
+    named_contexts: dict[str, dict[str, Any]] = {}
+    current_section_id = None
 
     for block in blocks:
-        # Resolve explicit test and shared markings
+        block_section_id = getattr(block, "attributes", {}).get("__section_id__")
+        if (
+            block_section_id is not None
+            and current_section_id is not None
+            and block_section_id != current_section_id
+        ):
+            shared_globals.clear()
+            shared_globals.update(initial_globals.copy())
+            named_contexts.clear()
+        if block_section_id is not None:
+            current_section_id = block_section_id
+
+        has_reset = block_has_reset_marker(block)
+        if has_reset:
+            shared_globals.clear()
+            shared_globals.update(initial_globals.copy())
+            named_contexts.clear()
+
         has_test = block_has_test_marker(block)
         has_shared = block_has_shared_marker(block)
+        context_name = block_get_shared_context(block)
 
-        # Classify and initialize execution namespace
+        if context_name:
+            if context_name not in named_contexts:
+                named_contexts[context_name] = initial_globals.copy()
+            target_shared = named_contexts[context_name]
+        else:
+            target_shared = shared_globals
+
         if has_shared and has_test:
-            # Case A: 'shared, test' -> Ephemeral copy of shared state (read-only snapshot at that point)
-            test_globals = shared_globals.copy()
+            test_globals = target_shared.copy()
             should_write_back = False
-        elif has_shared:
-            # Case B: 'shared' only -> Complete read-write and persistent
-            test_globals = shared_globals
+        elif has_shared or context_name:
+            test_globals = target_shared
             should_write_back = True
         else:
-            # Case C/D: 'test' only, or eager mode default -> Completely isolated from other blocks.
-            # It starts with the clean, initial namespace copy.
             test_globals = initial_globals.copy()
             should_write_back = False
 
-        if block.is_interactive:
-            # Parse and run interactive session in test_globals
+        if getattr(block, "is_interactive", False):
             parser = doctest.DocTestParser()
             test = parser.get_doctest(
                 block.content,
@@ -78,13 +97,11 @@ def run_test_blocks(blocks: list[Any], shared_globals: dict[str, Any]) -> None:
                 filename="<string>",
                 lineno=block.line_number,
             )
-
             runner = CustomDocTestRunner(optionflags=optionflags)
             runner.run(test, clear_globs=False)
 
-            # Save back variables if in Case B (shared only)
             if should_write_back:
-                shared_globals.update(test.globs)
+                target_shared.update(test.globs)
 
             if runner.test_failures:
                 first_fail_msg = runner.test_failures[0][2]
@@ -92,9 +109,7 @@ def run_test_blocks(blocks: list[Any], shared_globals: dict[str, Any]) -> None:
                     f"Test block failure at line {block.line_number}:\n{first_fail_msg}"
                 )
         else:
-            # Execute non-interactive raw Python block
             try:
-                # Compile code to get better tracebacks and exec in test_globals
                 code_content = block.content
                 if not code_content.endswith("\n"):
                     code_content += "\n"
@@ -102,12 +117,6 @@ def run_test_blocks(blocks: list[Any], shared_globals: dict[str, Any]) -> None:
                     code_content, f"<block_at_line_{block.line_number}>", "exec"
                 )
                 exec(compiled_code, test_globals)
-
-                # Save back variables if in Case B (shared only)
-                if should_write_back:
-                    # For script blocks, since test_globals is shared_globals,
-                    # updates are already written back. But we can ensure it.
-                    pass
             except AssertionError:
                 tb = traceback.format_exc()
                 raise AsciiDocTestFailure(

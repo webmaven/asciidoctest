@@ -48,6 +48,33 @@ def block_has_shared_marker(block: Any) -> bool:
     )
 
 
+def block_has_reset_marker(block: Any) -> bool:
+    """
+    Inspects a block's attributes, roles, and positional parameters
+    to determine if it has been marked with a 'reset' directive.
+    """
+    attrs = getattr(block, "attributes", {}) or {}
+    return (
+        "reset" in attrs
+        or attrs.get("reset") == "true"
+        or attrs.get("role") == "reset"
+        or "reset" in attrs.get("positional", [])
+        or ("reset" in str(attrs.get("role", "")).split())
+    )
+
+
+def block_get_shared_context(block: Any) -> str | None:
+    """
+    Returns the named shared context identifier if specified (e.g. shared="context_name"),
+    or None if it uses default shared context or is not shared.
+    """
+    attrs = getattr(block, "attributes", {}) or {}
+    shared_val = attrs.get("shared")
+    if shared_val and str(shared_val).lower() not in ("true", "1", "yes"):
+        return str(shared_val)
+    return None
+
+
 def parse_adoc_tests(
     content: str, mode: str = "explicit", preprocess_directives: bool = False
 ) -> list[TestBlock]:
@@ -75,9 +102,13 @@ def parse_adoc_tests(
     )
     all_blocks = visitor.extract(ast)
 
-    # Helper to check if a block has explicit 'test' or 'shared' markers
+    # Helper to check if a block has explicit 'test', 'shared', or 'reset' markers
     def has_explicit_markers(block: Any) -> bool:
-        return block_has_test_marker(block) or block_has_shared_marker(block)
+        return (
+            block_has_test_marker(block)
+            or block_has_shared_marker(block)
+            or block_has_reset_marker(block)
+        )
 
     any_explicit = any(has_explicit_markers(b) for b in all_blocks)
 
@@ -105,9 +136,13 @@ def extract_docstring_tests(docstring: str, mode: str = "explicit") -> list[Any]
     # Always extract all python blocks first
     all_blocks = doc_doc.extract_tests(language="python", requires_test_marker=False)
 
-    # Helper to check if a block has explicit 'test' or 'shared' markers
+    # Helper to check if a block has explicit 'test', 'shared', or 'reset' markers
     def has_explicit_markers(block: Any) -> bool:
-        return block_has_test_marker(block) or block_has_shared_marker(block)
+        return (
+            block_has_test_marker(block)
+            or block_has_shared_marker(block)
+            or block_has_reset_marker(block)
+        )
 
     any_explicit = any(has_explicit_markers(b) for b in all_blocks)
 
