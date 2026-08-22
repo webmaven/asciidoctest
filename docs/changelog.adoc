@@ -5,6 +5,25 @@
 
 This document catalogs release history and updates for `asciidoctest`.
 
+== link:https://pypi.org/project/asciidoctest/0.2.0a3/[0.2.0a3] - 2026-08-22
+
+=== Added
+* **Section Scoping, Named Contexts & Reset Markers (Issue #2)**:
+  - AST section boundary scoping resetting shared states across `==` section headings.
+  - Named context scopes (`shared="name"`) for isolated persistent timelines.
+  - Explicit reset markers (`[source,python,reset]`).
+* **Direct Doctest Extraction API (Issue #3)**:
+  - Standalone `extract_and_run_docstring_tests` function for Python files, directories, and loaded modules.
+  - AST-based static docstring discovery `find_docstrings_in_py_file`.
+
+=== Fixed
+* **Tolerant Illustrative Includes (Issue #1)**:
+  - Default `preprocess_directives=False` during doctest extraction.
+
+=== Changed
+* **Upgraded Dependencies**:
+  - Upgraded `asciidoctrine` to `>=0.2.0a2` and `asciidocstring` to `>=0.1.0a7`.
+
 == link:https://pypi.org/project/asciidoctest/0.2.0a2/[0.2.0a2] - 2026-07-31
 
 === Added

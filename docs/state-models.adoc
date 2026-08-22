@@ -7,9 +7,9 @@ AsciiDoctest provides a unified, symmetric state model across interactive REPL b
 
 == Defining Marked Blocks
 
-A block is marked by specifying `test` or `shared` in its block header:
-* Positional argument: `[source,python,shared]`
-* Explicit attribute: `[source,python,test="true"]`
+A block is marked by specifying `test`, `shared`, or `reset` in its block header:
+* Positional argument: `[source,python,shared]`, `[source,python,reset]`
+* Explicit attribute: `[source,python,test="true"]`, `[source,python,shared="context_name"]`
 * Role attribute: `[source,python,role="test"]`
 
 == State Models Overview
@@ -18,6 +18,9 @@ A block is marked by specifying `test` or `shared` in its block header:
 * **`test` (Isolated & Ephemeral)**: Executed in a fresh, clean namespace (`{}`). Any local variables or mutations are discarded after the block finishes.
 * **`shared` (Read-Write & Persistent)**: Participates in a continuous document-level shared global namespace (like a notebook). Variables and definitions persist top-to-bottom across subsequent `shared` blocks.
 * **`shared, test` (Ephemeral Copy)**: Inherits a snapshot copy of the shared state up to that point, but any mutations made inside the block are discarded when the block completes.
+* **Named Contexts (`[source,python,shared="context_name"]`)**: Maintains separate persistent timelines. Blocks sharing the same context name share state with each other independently of the default shared timeline.
+* **Explicit Reset (`[source,python,reset]`)**: Explicitly clears all accumulated shared state and named contexts, starting fresh from that block forward.
+* **Section Boundary Scoping**: In multi-section documents, crossing top-level section boundaries (`==`) automatically resets the default shared namespace and named contexts, isolating independent sections while preserving sequential flow within each section.
 
 == Examples
 
