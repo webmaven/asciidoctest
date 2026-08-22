@@ -6,7 +6,7 @@ sys.path.insert(0, os.path.abspath(".."))
 project = "asciidoctest"
 copyright = "2026, Michael R. Bernstein"
 author = "Michael R. Bernstein"
-release = "0.2.0a2"
+release = "0.2.0a3"
 
 extensions = [
     "sphinx_asciidoctrine",
