@@ -1,10 +1,13 @@
-import ast
 import importlib.util
 import sys
 
 import pytest
 
-from asciidoctest.parser import extract_docstring_tests, parse_adoc_tests
+from asciidoctest.parser import (
+    extract_docstring_tests,
+    find_docstrings_in_py_file,
+    parse_adoc_tests,
+)
 from asciidoctest.runner import AsciiDocTestFailure, run_test_blocks
 
 
@@ -38,30 +41,6 @@ def pytest_collect_file(file_path, parent):
         except Exception:
             pass
     return None
-
-
-def find_docstrings_in_py_file(path) -> list[tuple[str, int, str]]:
-    """Statically parse a Python file and return all docstrings with metadata."""
-    content = path.read_text("utf-8")
-    try:
-        tree = ast.parse(content)
-    except SyntaxError, ValueError:
-        return []
-
-    docstrings = []
-
-    # Simple AST visitor to extract docstrings and their containing names/lines
-    for node in ast.walk(tree):
-        if isinstance(
-            node, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef, ast.Module)
-        ):
-            docstring = ast.get_docstring(node)
-            if docstring:
-                lineno = getattr(node, "lineno", 1)
-                name = node.name if hasattr(node, "name") else "<module>"
-                docstrings.append((name, lineno, docstring))
-
-    return docstrings
 
 
 class AsciiDocFile(pytest.File):
