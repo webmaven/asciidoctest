@@ -100,3 +100,35 @@ def test_reset_marker_variations():
     assert block_has_reset_marker(b_pos) is True
     assert block_has_reset_marker(b_attr) is True
     assert block_has_reset_marker(b_plain) is False
+
+
+def test_shared_none_is_not_a_named_context():
+    """shared="none" must not create a context called "none" — it should return None."""
+    b = MockBlock("pass", attributes={"shared": "none"})
+    assert block_get_shared_context(b) is None
+
+
+def test_shared_reset_is_not_a_named_context():
+    """shared="reset" must not create a context called "reset" — it should return None."""
+    b = MockBlock("pass", attributes={"shared": "reset"})
+    assert block_get_shared_context(b) is None
+
+
+def test_shared_none_uppercase_is_not_a_named_context():
+    """shared="None" (mixed case) must also return None."""
+    b = MockBlock("pass", attributes={"shared": "None"})
+    assert block_get_shared_context(b) is None
+
+
+def test_shared_none_does_not_pollute_named_context_namespace():
+    """A block with shared="none" should participate in the *default* shared namespace,
+    not create a separate 'none' context."""
+    blocks = [
+        MockBlock("x = 42", attributes={"shared": "true"}),
+        # shared="none" should fall through to default shared — NOT a named context
+        MockBlock("assert x == 42", attributes={"shared": "none"}),
+    ]
+    shared_globals: dict[str, object] = {}
+    run_test_blocks(blocks, shared_globals)
+    # x should still be accessible from the default shared context
+    assert shared_globals.get("x") == 42
