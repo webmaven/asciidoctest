@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "asciidoctest"
-version = "0.2.0a2"
+version = "0.2.0a3"
 description = "Verifiable, stateful, and interactive documentation with AsciiDoc."
 readme = {file = "README.adoc", content-type = "text/plain"}
 requires-python = ">=3.14"
@@ -18,8 +18,8 @@ classifiers = [
     "Framework :: Pytest",
 ]
 dependencies = [
-    "asciidoctrine>=0.1.0a11",
-    "asciidocstring>=0.1.0a6",
+    "asciidoctrine>=0.2.0a2",
+    "asciidocstring>=0.1.0a7",
     "lark>=1.3.1",
 ]
 
@@ -51,6 +51,7 @@ where = ["."]
 include = ["asciidoctest*"]
 
 [tool.pytest.ini_options]
+pythonpath = ["."]
 testpaths = [
     "tests",
     "README.adoc",

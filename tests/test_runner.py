@@ -247,3 +247,18 @@ def test_extract_docstring_tests_unparseable_graceful():
     with patch("asciidocstring.parse", side_effect=Exception("unparseable")):
         blocks = extract_docstring_tests("some invalid docstring content")
         assert blocks == []
+
+
+def test_package_exports():
+    import asciidoctest
+
+    assert hasattr(asciidoctest, "AsciiDocTestFailure")
+    assert hasattr(asciidoctest, "DocFileSuite")
+    assert hasattr(asciidoctest, "DocTestSuite")
+    assert hasattr(asciidoctest, "extract_and_run_docstring_tests")
+    assert set(asciidoctest.__all__) == {
+        "AsciiDocTestFailure",
+        "DocFileSuite",
+        "DocTestSuite",
+        "extract_and_run_docstring_tests",
+    }
