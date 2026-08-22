@@ -3,7 +3,7 @@
 
 This document lists all notable changes and releases for `asciidoctest`.
 
-== [0.2.0a3] - 2026-08-22
+== link:https://pypi.org/project/asciidoctest/0.2.0a3/[0.2.0a3] - 2026-08-22
 
 === Added
 * **Section Scoping, Named Contexts & Reset Markers (Issue #2)**:
@@ -32,7 +32,7 @@ This document lists all notable changes and releases for `asciidoctest`.
 
 ---
 
-== [0.2.0a2] - 2026-07-31
+== link:https://pypi.org/project/asciidoctest/0.2.0a2/[0.2.0a2] - 2026-07-31
 
 === Added
 * **Security Policy & Documentation**:
@@ -47,7 +47,7 @@ This document lists all notable changes and releases for `asciidoctest`.
 
 ---
 
-== [0.2.0a1] - 2026-07-17
+== link:https://pypi.org/project/asciidoctest/0.2.0a1/[0.2.0a1] - 2026-07-17
 
 === Added
 * **Unified Symmetric Namespace and State Model**:
@@ -68,7 +68,7 @@ This document lists all notable changes and releases for `asciidoctest`.
 
 ---
 
-== [0.1.0a4] - 2026-07-16
+== link:https://pypi.org/project/asciidoctest/0.1.0a4/[0.1.0a4] - 2026-07-16
 
 === Added
 * **Traverser Safety Guard**: Introduced `SafeTestBlockExtractorVisitor` to safely bypass raw strings or child objects without a `.name` attribute during AST traversal, preventing crashes on complex unparsed text blocks.
@@ -80,7 +80,7 @@ This document lists all notable changes and releases for `asciidoctest`.
 
 ---
 
-== [0.1.0a3] - 2026-07-14
+== link:https://pypi.org/project/asciidoctest/0.1.0a3/[0.1.0a3] - 2026-07-14
 
 === Changed
 * **Upgraded dependencies**:
@@ -90,7 +90,7 @@ This document lists all notable changes and releases for `asciidoctest`.
 
 ---
 
-== [0.1.0a2] - 2026-07-13
+== link:https://pypi.org/project/asciidoctest/0.1.0a2/[0.1.0a2] - 2026-07-13
 
 === Added
 * **Optional test dependencies group**: Added a `[project.optional-dependencies]` section to `pyproject.toml` with a `test` target including `pytest` and `pytest-cov`.
@@ -107,7 +107,7 @@ This document lists all notable changes and releases for `asciidoctest`.
 
 ---
 
-== [0.1.0a1] - 2026-07-11
+== link:https://pypi.org/project/asciidoctest/0.1.0a1/[0.1.0a1] - 2026-07-11
 
 === Added
 * **Initial Release**: Released `asciidoctest` as an alpha utility.
