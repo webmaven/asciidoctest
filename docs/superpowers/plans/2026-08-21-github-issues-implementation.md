@@ -41,6 +41,7 @@ import pytest
 from asciidoctest.parser import parse_adoc_tests
 from asciidoctest.runner import run_test_blocks
 
+
 def test_parse_adoc_with_missing_illustrative_include():
     content = textwrap.dedent("""\
         = Document with Illustrative Include
@@ -61,6 +62,7 @@ def test_parse_adoc_with_missing_illustrative_include():
     # Execute blocks
     shared_globals = {}
     run_test_blocks(blocks, shared_globals)
+
 
 def test_parse_adoc_with_custom_preprocess_directives_flag():
     content = textwrap.dedent("""\
@@ -150,12 +152,13 @@ In `asciidoctest/parser.py`, add the required `ast` import and the extraction fu
 ```python
 import ast
 
+
 def find_docstrings_in_py_file(path) -> list[tuple[str, int, str]]:
     """Statically parse a Python file and return all docstrings with metadata."""
     content = path.read_text("utf-8")
     try:
         tree = ast.parse(content)
-    except (SyntaxError, ValueError):
+    except SyntaxError, ValueError:
         return []
 
     docstrings = []
@@ -228,6 +231,7 @@ from asciidoctest.parser import (
 )
 from asciidoctest.runner import run_test_blocks, AsciiDocTestFailure
 
+
 class MockBlock:
     def __init__(self, content, is_interactive=False, line_number=1, attributes=None):
         self.content = content
@@ -235,37 +239,53 @@ class MockBlock:
         self.line_number = line_number
         self.attributes = attributes or {}
 
+
 def test_explicit_reset_marker():
     blocks = [
         MockBlock("a = 10", attributes={"shared": "true"}),
         MockBlock("assert a == 10", attributes={"shared": "true"}),
         MockBlock("b = 20", attributes={"reset": "true", "shared": "true"}),
-        MockBlock("assert 'a' not in globals() and b == 20", attributes={"shared": "true"}),
+        MockBlock(
+            "assert 'a' not in globals() and b == 20", attributes={"shared": "true"}
+        ),
     ]
     shared_globals = {}
     run_test_blocks(blocks, shared_globals)
     assert "a" not in shared_globals
     assert shared_globals.get("b") == 20
 
+
 def test_named_context_scopes():
     blocks = [
         MockBlock("x = 100", attributes={"shared": "ctx_a"}),
         MockBlock("y = 200", attributes={"shared": "ctx_b"}),
-        MockBlock("assert x == 100 and 'y' not in globals()", attributes={"shared": "ctx_a"}),
-        MockBlock("assert y == 200 and 'x' not in globals()", attributes={"shared": "ctx_b"}),
-        MockBlock("assert 'x' not in globals() and 'y' not in globals()", attributes={"shared": "true"}),
+        MockBlock(
+            "assert x == 100 and 'y' not in globals()", attributes={"shared": "ctx_a"}
+        ),
+        MockBlock(
+            "assert y == 200 and 'x' not in globals()", attributes={"shared": "ctx_b"}
+        ),
+        MockBlock(
+            "assert 'x' not in globals() and 'y' not in globals()",
+            attributes={"shared": "true"},
+        ),
     ]
     shared_globals = {}
     run_test_blocks(blocks, shared_globals)
 
+
 def test_named_context_ephemeral_test():
     blocks = [
         MockBlock("val = 'persistent'", attributes={"shared": "db_ctx"}),
-        MockBlock("assert val == 'persistent'\nval = 'mutated'\n", attributes={"shared": "db_ctx", "test": "true"}),
+        MockBlock(
+            "assert val == 'persistent'\nval = 'mutated'\n",
+            attributes={"shared": "db_ctx", "test": "true"},
+        ),
         MockBlock("assert val == 'persistent'", attributes={"shared": "db_ctx"}),
     ]
     shared_globals = {}
     run_test_blocks(blocks, shared_globals)
+
 
 def test_parse_named_context_and_reset_from_adoc():
     content = textwrap.dedent("""\
@@ -315,6 +335,7 @@ def block_has_reset_marker(block: Any) -> bool:
         or ("reset" in str(attrs.get("role", "")).split())
     )
 
+
 def block_get_shared_context(block: Any) -> str | None:
     """
     Returns the named shared context identifier if specified (e.g. shared="context_name"),
@@ -339,11 +360,14 @@ import doctest
 import traceback
 from typing import Any
 
+
 class AsciiDocTestFailure(AssertionError):
     """Exception raised when an asciidoc test block execution fails."""
 
+
 class CustomDocTestRunner(doctest.DocTestRunner):
     """A customized doctest runner that gathers failures in-memory."""
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.test_failures = []
@@ -364,6 +388,7 @@ class CustomDocTestRunner(doctest.DocTestRunner):
         )
         self.test_failures.append((example, exc_info, msg))
 
+
 def run_test_blocks(blocks: list[Any], shared_globals: dict[str, Any]) -> None:
     """
     Executes a sequence of test blocks under a unified, symmetric state model.
@@ -376,7 +401,11 @@ def run_test_blocks(blocks: list[Any], shared_globals: dict[str, Any]) -> None:
 
     for block in blocks:
         block_section_id = getattr(block, "attributes", {}).get("__section_id__")
-        if block_section_id is not None and current_section_id is not None and block_section_id != current_section_id:
+        if (
+            block_section_id is not None
+            and current_section_id is not None
+            and block_section_id != current_section_id
+        ):
             shared_globals.clear()
             shared_globals.update(initial_globals.copy())
             named_contexts.clear()
@@ -484,6 +513,7 @@ import pytest
 from asciidoctest.parser import parse_adoc_tests
 from asciidoctest.runner import run_test_blocks
 
+
 def test_section_boundary_resets_shared_state():
     content = textwrap.dedent("""\
         = API Documentation
@@ -535,6 +565,7 @@ class SafeTestBlockExtractorVisitor(TestBlockExtractorVisitor):
     or other non-Node elements encountered during generic AST traversal, and tracks
     top-level Section boundaries.
     """
+
     def __init__(self, target_language: str, requires_test_marker: bool):
         super().__init__(target_language, requires_test_marker)
         self._current_section_id = 0
@@ -607,6 +638,7 @@ import asciidoctest
 from asciidoctest import extract_and_run_docstring_tests
 from asciidoctest.runner import AsciiDocTestFailure
 
+
 def test_extract_and_run_docstring_tests_from_module_object():
     mod = types.ModuleType("test_sample_mod")
     mod_code = textwrap.dedent('''\
@@ -641,6 +673,7 @@ def test_extract_and_run_docstring_tests_from_module_object():
     assert results["passed"] == 2
     assert results["failed"] == 0
 
+
 def test_extract_and_run_docstring_tests_per_symbol_isolation():
     mod = types.ModuleType("test_symbol_isolation_mod")
     mod_code = textwrap.dedent('''\
@@ -668,9 +701,11 @@ def test_extract_and_run_docstring_tests_per_symbol_isolation():
     assert results["passed"] == 2
     assert results["failed"] == 0
 
+
 def test_extract_and_run_docstring_tests_from_py_file(tmp_path):
     py_file = tmp_path / "sample.py"
-    py_file.write_text(textwrap.dedent('''\
+    py_file.write_text(
+        textwrap.dedent('''\
         def double(n):
             """
             [source,python,test]
@@ -679,15 +714,19 @@ def test_extract_and_run_docstring_tests_from_py_file(tmp_path):
             ----
             """
             return n * 2
-    '''), encoding="utf-8")
+    '''),
+        encoding="utf-8",
+    )
 
     results = extract_and_run_docstring_tests(py_file, mode="explicit")
     assert results["total"] == 1
     assert results["passed"] == 1
 
+
 def test_extract_and_run_docstring_tests_failure_raises(tmp_path):
     py_file = tmp_path / "fail_sample.py"
-    py_file.write_text(textwrap.dedent('''\
+    py_file.write_text(
+        textwrap.dedent('''\
         def broken():
             """
             [source,python,test]
@@ -696,7 +735,9 @@ def test_extract_and_run_docstring_tests_failure_raises(tmp_path):
             ----
             """
             pass
-    '''), encoding="utf-8")
+    '''),
+        encoding="utf-8",
+    )
 
     with pytest.raises(AsciiDocTestFailure):
         extract_and_run_docstring_tests(py_file, mode="explicit")
@@ -722,6 +763,7 @@ from typing import Any
 from asciidoctest.parser import extract_docstring_tests, find_docstrings_in_py_file
 from asciidoctest.runner import run_test_blocks
 
+
 def extract_and_run_docstring_tests(
     source_path_or_module: str | pathlib.Path | types.ModuleType,
     mode: str = "explicit",
@@ -739,7 +781,9 @@ def extract_and_run_docstring_tests(
         _run_tests_on_module(source_path_or_module, mode=mode, stats=stats)
         return stats
 
-    if isinstance(source_path_or_module, str) and not os.path.exists(source_path_or_module):
+    if isinstance(source_path_or_module, str) and not os.path.exists(
+        source_path_or_module
+    ):
         if source_path_or_module in sys.modules:
             mod = sys.modules[source_path_or_module]
         else:
@@ -757,6 +801,7 @@ def extract_and_run_docstring_tests(
         raise ValueError(f"Invalid source path or module: {source_path_or_module}")
 
     return stats
+
 
 def _run_tests_on_py_file(path: pathlib.Path, mode: str, stats: dict[str, Any]) -> None:
     docstrings = find_docstrings_in_py_file(path)
@@ -789,7 +834,10 @@ def _run_tests_on_py_file(path: pathlib.Path, mode: str, stats: dict[str, Any]) 
             run_test_blocks(tests, globals_copy)
             stats["passed"] += 1
 
-def _run_tests_on_module(mod: types.ModuleType, mode: str, stats: dict[str, Any]) -> None:
+
+def _run_tests_on_module(
+    mod: types.ModuleType, mode: str, stats: dict[str, Any]
+) -> None:
     discovered = set()
 
     def process_object(name: str, obj: Any):

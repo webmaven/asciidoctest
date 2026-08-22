@@ -141,4 +141,3 @@ def test_python_docstring_collection_with_whitespace_spacing(pytester):
     pytester.makepyfile(module_ws=py_content)
     result = pytester.runpytest("-v")
     result.assert_outcomes(passed=1, failed=0)
-

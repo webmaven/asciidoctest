@@ -152,9 +152,16 @@ def test_section_id_annotation():
 
 
 def test_falsy_shared_context_values():
-    assert block_get_shared_context(MockBlock("", attributes={"shared": "false"})) is None
+    assert (
+        block_get_shared_context(MockBlock("", attributes={"shared": "false"})) is None
+    )
     assert block_get_shared_context(MockBlock("", attributes={"shared": "0"})) is None
     assert block_get_shared_context(MockBlock("", attributes={"shared": "no"})) is None
-    assert block_get_shared_context(MockBlock("", attributes={"shared": "true"})) is None
+    assert (
+        block_get_shared_context(MockBlock("", attributes={"shared": "true"})) is None
+    )
     assert block_get_shared_context(MockBlock("", attributes={"shared": "1"})) is None
-    assert block_get_shared_context(MockBlock("", attributes={"shared": "custom_name"})) == "custom_name"
+    assert (
+        block_get_shared_context(MockBlock("", attributes={"shared": "custom_name"}))
+        == "custom_name"
+    )

@@ -85,9 +85,7 @@ def DocFileSuite(*paths: str | pathlib.Path, **kwargs: Any) -> unittest.TestSuit
     return suite
 
 
-def DocTestSuite(
-    module: str | types.ModuleType, **kwargs: Any
-) -> unittest.TestSuite:
+def DocTestSuite(module: str | types.ModuleType, **kwargs: Any) -> unittest.TestSuite:
     """
     Creates a unittest.TestSuite for running AsciiDoc docstring tests from a module.
     """
