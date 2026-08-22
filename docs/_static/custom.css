@@ -143,3 +143,13 @@ a:hover, a:active {
 .admonition.note .admonition-title, .admonition.todo .admonition-title {
     background-color: #2d6a4f !important;
 }
+
+/* Footer Link Styling */
+footer div[role="contentinfo"] a {
+    color: #2d6a4f !important;
+    font-weight: 600;
+}
+footer div[role="contentinfo"] a:hover {
+    color: #1b4332 !important;
+    text-decoration: underline;
+}

@@ -7,7 +7,7 @@ import types
 from typing import Any
 
 from asciidoctest.parser import extract_docstring_tests, find_docstrings_in_py_file
-from asciidoctest.runner import run_test_blocks
+from asciidoctest.runner import AsciiDocTestFailure, run_test_blocks
 
 
 def extract_and_run_docstring_tests(
@@ -75,12 +75,15 @@ def _run_tests_on_py_file(path: pathlib.Path, mode: str, stats: dict[str, Any]) 
         if sys.path and sys.path[0] == parent_dir:
             sys.path.pop(0)
 
-    for _name, _lineno, docstring in docstrings:
+    for name, _lineno, docstring in docstrings:
         tests = extract_docstring_tests(docstring, mode=mode)
         if tests:
             stats["total"] += 1
             globals_copy = dict(module.__dict__)
-            run_test_blocks(tests, globals_copy)
+            try:
+                run_test_blocks(tests, globals_copy)
+            except AsciiDocTestFailure as e:
+                raise AsciiDocTestFailure(f"[{path}:{name}] {e}") from None
             stats["passed"] += 1
 
 
@@ -89,7 +92,7 @@ def _run_tests_on_module(
 ) -> None:
     discovered = set()
 
-    def process_object(_name: str, obj: Any) -> None:
+    def process_object(name: str, obj: Any) -> None:
         if id(obj) in discovered:
             return
         discovered.add(id(obj))
@@ -100,7 +103,10 @@ def _run_tests_on_module(
             if tests:
                 stats["total"] += 1
                 globals_copy = dict(mod.__dict__)
-                run_test_blocks(tests, globals_copy)
+                try:
+                    run_test_blocks(tests, globals_copy)
+                except AsciiDocTestFailure as e:
+                    raise AsciiDocTestFailure(f"[{name}] {e}") from None
                 stats["passed"] += 1
 
     process_object(mod.__name__, mod)

@@ -177,10 +177,75 @@ def test_extract_and_run_docstring_tests_failure_raises(tmp_path):
         encoding="utf-8",
     )
 
-    with pytest.raises(AsciiDocTestFailure):
+    with pytest.raises(AsciiDocTestFailure) as exc_info:
         extract_and_run_docstring_tests(py_file, mode="explicit")
+    msg = str(exc_info.value)
+    assert str(py_file.resolve()) in msg or str(py_file) in msg
+    assert "broken" in msg
+
+
+def test_extract_and_run_docstring_tests_module_function_failure_context():
+    mod = types.ModuleType("test_mod_func_fail")
+    mod_code = textwrap.dedent('''\
+        def failing_routine():
+            """
+            [source,python,test]
+            ----
+            assert False
+            ----
+            """
+            pass
+    ''')
+    exec(mod_code, mod.__dict__)
+
+    with pytest.raises(AsciiDocTestFailure) as exc_info:
+        extract_and_run_docstring_tests(mod, mode="explicit")
+    msg = str(exc_info.value)
+    assert "[test_mod_func_fail.failing_routine]" in msg
+
+
+def test_extract_and_run_docstring_tests_class_method_failure_context():
+    mod = types.ModuleType("test_mod_method_fail")
+    mod_code = textwrap.dedent('''\
+        class Calculator:
+            def bad_method(self):
+                """
+                [source,python,test]
+                ----
+                assert 2 + 2 == 5
+                ----
+                """
+                pass
+    ''')
+    exec(mod_code, mod.__dict__)
+
+    with pytest.raises(AsciiDocTestFailure) as exc_info:
+        extract_and_run_docstring_tests(mod, mode="explicit")
+    msg = str(exc_info.value)
+    assert "[test_mod_method_fail.Calculator.bad_method]" in msg
+
+
+def test_extract_and_run_docstring_tests_class_docstring_failure_context():
+    mod = types.ModuleType("test_mod_class_fail")
+    mod_code = textwrap.dedent('''\
+        class BrokenService:
+            """
+            [source,python,test]
+            ----
+            assert 1 == 0
+            ----
+            """
+            pass
+    ''')
+    exec(mod_code, mod.__dict__)
+
+    with pytest.raises(AsciiDocTestFailure) as exc_info:
+        extract_and_run_docstring_tests(mod, mode="explicit")
+    msg = str(exc_info.value)
+    assert "[test_mod_class_fail.BrokenService]" in msg
 
 
 def test_extract_and_run_docstring_tests_invalid_input():
     with pytest.raises(ValueError):
         extract_and_run_docstring_tests(12345)
+

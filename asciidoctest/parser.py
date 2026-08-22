@@ -1,4 +1,5 @@
 import ast
+import pathlib
 from typing import Any
 
 import asciidocstring
@@ -194,9 +195,12 @@ def extract_docstring_tests(docstring: str, mode: str = "explicit") -> list[Any]
         return []
 
 
-def find_docstrings_in_py_file(path) -> list[tuple[str, int, str]]:
+def find_docstrings_in_py_file(
+    path: str | pathlib.Path,
+) -> list[tuple[str, int, str]]:
     """Statically parse a Python file and return all docstrings with metadata."""
-    content = path.read_text("utf-8")
+    p = pathlib.Path(path)
+    content = p.read_text("utf-8")
     try:
         tree = ast.parse(content)
     except (SyntaxError, ValueError):
@@ -213,3 +217,4 @@ def find_docstrings_in_py_file(path) -> list[tuple[str, int, str]]:
                 name = node.name if hasattr(node, "name") else "<module>"
                 docstrings.append((name, lineno, docstring))
     return docstrings
+
