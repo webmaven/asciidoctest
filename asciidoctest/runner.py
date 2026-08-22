@@ -56,7 +56,6 @@ class CustomDocTestRunner(doctest.DocTestRunner):
         self.test_failures.append((example, exc_info, msg))
 
 
-
 def run_test_blocks(blocks: list[Any], shared_globals: dict[str, Any]) -> None:
     """
     Executes a sequence of test blocks under a unified, symmetric state model.

@@ -111,7 +111,6 @@ def block_get_shared_context(block: Any) -> str | None:
     return None
 
 
-
 def parse_adoc_tests(
     content: str, mode: str = "explicit", preprocess_directives: bool = False
 ) -> list[TestBlock]:
@@ -201,7 +200,7 @@ def find_docstrings_in_py_file(
     content = p.read_text("utf-8")
     try:
         tree = ast.parse(content)
-    except (SyntaxError, ValueError):
+    except SyntaxError, ValueError:
         return []
 
     docstrings = []
@@ -215,4 +214,3 @@ def find_docstrings_in_py_file(
                 name = node.name if hasattr(node, "name") else "<module>"
                 docstrings.append((name, lineno, docstring))
     return docstrings
-

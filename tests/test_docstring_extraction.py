@@ -248,4 +248,3 @@ def test_extract_and_run_docstring_tests_class_docstring_failure_context():
 def test_extract_and_run_docstring_tests_invalid_input():
     with pytest.raises(ValueError):
         extract_and_run_docstring_tests(12345)
-

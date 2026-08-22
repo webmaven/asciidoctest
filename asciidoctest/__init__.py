@@ -8,4 +8,3 @@ __all__ = [
     "DocTestSuite",
     "extract_and_run_docstring_tests",
 ]
-

@@ -21,7 +21,9 @@ def test_explicit_reset_marker():
         MockBlock("a = 10", attributes={"shared": "true"}),
         MockBlock("assert a == 10", attributes={"shared": "true"}),
         MockBlock("b = 20", attributes={"reset": "true", "shared": "true"}),
-        MockBlock("assert 'a' not in globals() and b == 20", attributes={"shared": "true"}),
+        MockBlock(
+            "assert 'a' not in globals() and b == 20", attributes={"shared": "true"}
+        ),
     ]
     shared_globals = {}
     run_test_blocks(blocks, shared_globals)
@@ -33,9 +35,16 @@ def test_named_context_scopes():
     blocks = [
         MockBlock("x = 100", attributes={"shared": "ctx_a"}),
         MockBlock("y = 200", attributes={"shared": "ctx_b"}),
-        MockBlock("assert x == 100 and 'y' not in globals()", attributes={"shared": "ctx_a"}),
-        MockBlock("assert y == 200 and 'x' not in globals()", attributes={"shared": "ctx_b"}),
-        MockBlock("assert 'x' not in globals() and 'y' not in globals()", attributes={"shared": "true"}),
+        MockBlock(
+            "assert x == 100 and 'y' not in globals()", attributes={"shared": "ctx_a"}
+        ),
+        MockBlock(
+            "assert y == 200 and 'x' not in globals()", attributes={"shared": "ctx_b"}
+        ),
+        MockBlock(
+            "assert 'x' not in globals() and 'y' not in globals()",
+            attributes={"shared": "true"},
+        ),
     ]
     shared_globals = {}
     run_test_blocks(blocks, shared_globals)
@@ -44,7 +53,10 @@ def test_named_context_scopes():
 def test_named_context_ephemeral_test():
     blocks = [
         MockBlock("val = 'persistent'", attributes={"shared": "db_ctx"}),
-        MockBlock("assert val == 'persistent'\nval = 'mutated'\n", attributes={"shared": "db_ctx", "test": "true"}),
+        MockBlock(
+            "assert val == 'persistent'\nval = 'mutated'\n",
+            attributes={"shared": "db_ctx", "test": "true"},
+        ),
         MockBlock("assert val == 'persistent'", attributes={"shared": "db_ctx"}),
     ]
     shared_globals = {}
@@ -78,10 +90,26 @@ def test_parse_named_context_and_reset_from_adoc():
 
 def test_interactive_named_context_and_reset():
     blocks = [
-        MockBlock(">>> val = 42\n>>> val\n42", is_interactive=True, attributes={"shared": "interactive_ctx"}),
-        MockBlock(">>> val + 1\n43", is_interactive=True, attributes={"shared": "interactive_ctx"}),
-        MockBlock(">>> val = 100\n>>> val\n100", is_interactive=True, attributes={"reset": "true", "shared": "interactive_ctx"}),
-        MockBlock(">>> val\n100", is_interactive=True, attributes={"shared": "interactive_ctx"}),
+        MockBlock(
+            ">>> val = 42\n>>> val\n42",
+            is_interactive=True,
+            attributes={"shared": "interactive_ctx"},
+        ),
+        MockBlock(
+            ">>> val + 1\n43",
+            is_interactive=True,
+            attributes={"shared": "interactive_ctx"},
+        ),
+        MockBlock(
+            ">>> val = 100\n>>> val\n100",
+            is_interactive=True,
+            attributes={"reset": "true", "shared": "interactive_ctx"},
+        ),
+        MockBlock(
+            ">>> val\n100",
+            is_interactive=True,
+            attributes={"shared": "interactive_ctx"},
+        ),
     ]
     shared_globals = {}
     run_test_blocks(blocks, shared_globals)
