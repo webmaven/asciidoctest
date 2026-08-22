@@ -99,19 +99,17 @@ def block_get_shared_context(block: Any) -> str | None:
     """
     Returns the named shared context identifier if specified (e.g. shared="context_name"),
     or None if it uses default shared context or is not shared.
+
+    The values "none" and "reset" are treated as falsy and do not create named contexts,
+    consistent with the CHANGELOG documentation.
     """
+    _FALSY_SHARED = {"true", "1", "yes", "false", "0", "no", "none", "reset"}
     attrs = getattr(block, "attributes", {}) or {}
     shared_val = attrs.get("shared")
-    if shared_val and str(shared_val).lower() not in (
-        "true",
-        "1",
-        "yes",
-        "false",
-        "0",
-        "no",
-    ):
+    if shared_val and str(shared_val).lower() not in _FALSY_SHARED:
         return str(shared_val)
     return None
+
 
 
 def parse_adoc_tests(
