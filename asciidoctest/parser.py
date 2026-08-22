@@ -47,7 +47,9 @@ def block_has_shared_marker(block: Any) -> bool:
     )
 
 
-def parse_adoc_tests(content: str, mode: str = "explicit") -> list[TestBlock]:
+def parse_adoc_tests(
+    content: str, mode: str = "explicit", preprocess_directives: bool = False
+) -> list[TestBlock]:
     """
     Parses AsciiDoc source string and extracts python test blocks under
     a unified, symmetric safety-first design.
@@ -62,7 +64,7 @@ def parse_adoc_tests(content: str, mode: str = "explicit") -> list[TestBlock]:
                 explicit attributes or roles of either 'test' or 'shared'.
     """
     try:
-        ast = parse_to_ast(content)
+        ast = parse_to_ast(content, preprocess_directives=preprocess_directives)
     except Exception as e:
         raise ValueError(f"AsciiDoc Parse Error: {e}") from e
 
