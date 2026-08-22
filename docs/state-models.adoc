@@ -104,3 +104,84 @@ modified value
 >>> print(x)
 asciidoctest
 ----
+
+=== Named Context Scopes (`shared="<name>"`)
+
+Independent state timelines can run in parallel within the same document using named contexts.
+Blocks sharing the same context name share state with each other but are fully isolated from
+the default shared namespace and from other named contexts.
+
+[source,python,shared="db_context"]
+----
+connection = "postgres://localhost/mydb"
+records = [{"id": 1, "name": "Alice"}]
+----
+
+[source,python,shared="cache_context"]
+----
+cache = {}
+cache["session_42"] = {"user": "Alice", "role": "admin"}
+----
+
+Subsequent blocks in the same context see accumulated state; blocks in a different context do not:
+
+[source,python,shared="db_context"]
+----
+assert connection == "postgres://localhost/mydb"
+assert len(records) == 1
+# 'cache' lives in "cache_context" and is NOT visible here
+----
+
+[source,python,shared="cache_context"]
+----
+assert cache["session_42"]["role"] == "admin"
+# 'connection' lives in "db_context" and is NOT visible here
+----
+
+=== Explicit Reset (`reset`)
+
+Use `[source,python,reset]` to explicitly clear all accumulated shared state and named
+contexts at any point in the document, starting fresh from that block forward.
+
+[source,python,shared]
+----
+setup_value = 42
+----
+
+[source,python,reset]
+----
+# Executes in a fresh namespace. setup_value has been cleared.
+pass
+----
+
+[source,python,shared]
+----
+# Shared namespace is now empty — setup_value is gone.
+assert "setup_value" not in dir()
+new_value = 99
+----
+
+=== Section Boundary Scoping (`== Section`)
+
+When a document has multiple top-level sections (`==`), crossing a section boundary
+automatically resets the default shared namespace and all named contexts, preventing
+state from leaking between unrelated topics or API groups.
+
+[source,adoc]
+----
+== First Section
+
+[source,python,shared]
+\----
+section_one_var = "hello"
+\----
+
+== Second Section
+
+[source,python,shared]
+\----
+// section_one_var is NOT accessible here — the boundary reset cleared it.
+assert "section_one_var" not in dir()
+section_two_var = "world"
+\----
+----
