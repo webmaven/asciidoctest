@@ -9,13 +9,44 @@ from asciidoctrine.lark_parser import parse_to_ast
 class SafeTestBlockExtractorVisitor(TestBlockExtractorVisitor):
     """
     A robust subclass of TestBlockExtractorVisitor that safely handles raw strings
-    or other non-Node elements encountered during generic AST traversal.
+    or other non-Node elements encountered during generic AST traversal, and tracks
+    top-level Section boundaries.
     """
+
+    def __init__(self, target_language: str, requires_test_marker: bool):
+        super().__init__(target_language, requires_test_marker)
+        self._current_section_id = 0
+        self._section_counter = 0
+
+    def extract(self, node: Any) -> list[TestBlock]:
+        self._current_section_id = 0
+        self._section_counter = 0
+        return super().extract(node)
 
     def visit(self, node: Any, **kwargs: Any) -> Any:
         if isinstance(node, str) or not hasattr(node, "name"):
             return None
+
+        if getattr(node, "name", "") == "section":
+            level = getattr(node, "level", 1)
+            if level <= 1:
+                self._section_counter += 1
+                prev_section_id = self._current_section_id
+                self._current_section_id = self._section_counter
+                result = super().visit(node, **kwargs)
+                self._current_section_id = prev_section_id
+                return result
+
         return super().visit(node, **kwargs)
+
+    def visit_listing(self, node: Any) -> None:
+        count_before = len(self.extracted_tests)
+        super().visit_listing(node)
+        if len(self.extracted_tests) > count_before:
+            block = self.extracted_tests[-1]
+            if getattr(block, "attributes", None) is None:
+                block.attributes = {}
+            block.attributes["__section_id__"] = self._current_section_id
 
 
 def block_has_test_marker(block: Any) -> bool:
@@ -70,7 +101,14 @@ def block_get_shared_context(block: Any) -> str | None:
     """
     attrs = getattr(block, "attributes", {}) or {}
     shared_val = attrs.get("shared")
-    if shared_val and str(shared_val).lower() not in ("true", "1", "yes"):
+    if shared_val and str(shared_val).lower() not in (
+        "true",
+        "1",
+        "yes",
+        "false",
+        "0",
+        "no",
+    ):
         return str(shared_val)
     return None
 
