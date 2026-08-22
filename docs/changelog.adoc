@@ -1,52 +1,116 @@
 = Changelog
 :toc: left
-:idprefix:
-:idseparator: -
 
-This document catalogs release history and updates for `asciidoctest`.
+This document lists all notable changes and releases for `asciidoctest`.
 
-== link:https://pypi.org/project/asciidoctest/0.2.0a3/[0.2.0a3] - 2026-08-22
+== [0.2.0a3] - 2026-08-22
 
 === Added
 * **Section Scoping, Named Contexts & Reset Markers (Issue #2)**:
-  - AST section boundary scoping resetting shared states across `==` section headings.
-  - Named context scopes (`shared="name"`) for isolated persistent timelines.
-  - Explicit reset markers (`[source,python,reset]`).
+  - **AST Section Boundary Scoping**: Automatic shared state reset when traversing across top-level section boundaries (`==`), isolating independent document chapters, classes, and topics while preserving sequential state flow within each section.
+  - **Named Context Scopes**: Introduced `[source,python,shared="<name>"]` support to allow multiple independent, persistent state timelines within the same document.
+  - **Explicit Reset Markers**: Added `[source,python,reset]` and `[source,python,reset,shared]` directives (also accepting `shared="none"` or `shared="reset"`) to clear all accumulated shared state and named contexts on demand.
 * **Direct Doctest Extraction API (Issue #3)**:
-  - Standalone `extract_and_run_docstring_tests` function for Python files, directories, and loaded modules.
-  - AST-based static docstring discovery `find_docstrings_in_py_file`.
+  - Added `asciidoctest.extract_and_run_docstring_tests(source_path_or_module, mode="explicit")` for programmatic discovery and execution of doctests from Python source files, package directories, or imported module objects.
+  - Added `find_docstrings_in_py_file` in `asciidoctest.parser` for AST-based static docstring discovery without running module code during parsing.
+* **PEP 561 Type Information**: Added `asciidoctest/py.typed` marker (PEP 561) so downstream projects using mypy or pyright receive full type information from `asciidoctest`.
+* **Top-level `AsciiDocTestFailure` export**: `AsciiDocTestFailure` is now re-exported from `asciidoctest.__init__` and included in `__all__`, enabling `from asciidoctest import AsciiDocTestFailure` without submodule access.
+* **Contextual failure messages**: `AsciiDocTestFailure` raised during directory or module docstring extraction now includes `[filepath:symbol]` context so the failing file and function are immediately identifiable.
+* **State model quick-reference table**: Added a comprehensive marker/namespace cheatsheet table to `docs/getting-started.adoc` and `docs/state-models.adoc`.
 
 === Fixed
 * **Tolerant Illustrative Includes (Issue #1)**:
-  - Default `preprocess_directives=False` during doctest extraction.
+  - Disabled include preprocessing by default (`preprocess_directives=False`) during AsciiDoc doctest parsing, allowing illustrative or documentation-only `include::...[]` macros without requiring target files to exist on disk.
+* **Pytest pre-filter spacing tolerance (DX)**: Updated the `.py` file pre-filter in `pytest_plugin.py` from a plain string check (`"[source,python"`) to a regex (`re.search(r"\[source\s*,\s*python", content)`), correctly handling AsciiDoc block headers with spaces after commas (e.g. `[source, python, test]`).
+* **`shared="none"` and `shared="reset"` not triggering reset (Issue #10)**: `block_get_shared_context` now correctly treats `shared="none"` and `shared="reset"` (case-insensitive) as falsy values that do not create named contexts, consistent with the CHANGELOG documentation.
 
 === Changed
 * **Upgraded Dependencies**:
-  - Upgraded `asciidoctrine` to `>=0.2.0a2` and `asciidocstring` to `>=0.1.0a7`.
+  - Upgraded `asciidoctrine` dependency requirement to `>=0.2.0a2`.
+  - Upgraded `asciidocstring` dependency requirement to `>=0.1.0a7`.
+* **`mypy --strict` compliance**: Resolved all 32 strict typing violations across `parser.py`, `runner.py`, `unittest_integration.py`, and `pytest_plugin.py`. `mypy --strict asciidoctest` now reports zero errors.
 
-== link:https://pypi.org/project/asciidoctest/0.2.0a2/[0.2.0a2] - 2026-07-31
+---
+
+== [0.2.0a2] - 2026-07-31
 
 === Added
 * **Security Policy & Documentation**:
-  - Added `SECURITY.adoc` and dedicated Sphinx `security.adoc` page detailing execution safety rules and vulnerability reporting processes.
+  - Added `SECURITY.adoc` and dedicated Sphinx `security.adoc` page outlining execution safety context, supported version matrix, and responsible disclosure workflow.
 
 === Changed
 * **Upgraded Dependencies**:
-  - Upgraded `asciidoctrine` requirement to `>=0.1.0a11` to support configurable custom URI schemes, bare URL and email autolink features, list continuations, and Post-AST syntax checks.
-  - Upgraded `asciidocstring` requirement to `>=0.1.0a6`.
-* **Documentation & Theme**:
-  - Published multi-page documentation website using `sphinx_rtd_theme` customized with AsciiDoctrine's forest-green dark theme.
+  - Upgraded `asciidoctrine` dependency constraint to `>=0.1.0a11` to leverage configurable custom URI schemes, bare URL and email autolink features, list continuations, and Post-AST syntax checks.
+  - Upgraded `asciidocstring` dependency constraint to `>=0.1.0a6`.
+* **Documentation & Styling**:
+  - Published multi-page HTML documentation site using `sphinx_rtd_theme` styled with AsciiDoctrine's forest-green dark theme overrides.
 
-== link:https://pypi.org/project/asciidoctest/0.2.0a1/[0.2.0a1] - 2026-07-17
+---
+
+== [0.2.0a1] - 2026-07-17
 
 === Added
 * **Unified Symmetric Namespace and State Model**:
-  - Established symmetric execution rules for REPL and script blocks (`test`, `shared`, `shared, test`).
+  - Established identical, symmetric execution and namespace isolation rules for both interactive REPL and non-interactive script blocks.
+  - **Isolated & Ephemeral (`test`)**: Run in a clean copy of the initial namespace, keeping them fully isolated from subsequent side-effects by default.
+  - **Persistent & Stateful (`shared`)**: Run in the sequential shared globals (like a continuous notebook), allowing variables to persist top-to-bottom across both script and interactive blocks.
+  - **Ephemeral Copy (`shared, test`)**: Run in a temporary snapshot copy of the shared globals, enabling access to preceding variables while safely discarding local mutations when the block ends.
+  - **No Marker**: Treated as a static listing and skipped by default.
 * **Intelligent `eager` Mode Safety Guard**:
-  - Bypasses `eager` fallback when explicit markers exist.
+  - In `eager` mode, unmarked listings are only run as isolated `test` blocks if the document contains zero explicit markers. If *any* block in the file has explicit attributes or roles, `eager` mode is bypassed/disabled for that file.
 
-== link:https://pypi.org/project/asciidoctest/0.1.0a4/[0.1.0a4] - 2026-07-16
+
+=== Refactored
+* **Centralized Block Marker Inspection**:
+  - Refactored internal parsing to centralize block marker extraction (`block_has_test_marker` and `block_has_shared_marker`), eliminating duplication across the parser and runner.
+* **Verifiable Documentation Terminology**:
+  - Re-framed the project documentation and `README.adoc` around verifiable and stateful narrative documentation rather than Literate Programming.
+
+---
+
+== [0.1.0a4] - 2026-07-16
 
 === Added
-* **Traverser Safety Guard**: `SafeTestBlockExtractorVisitor`.
-* **Pytest Discovery Constraints**: Restricted discovery to `tests/` and `README.adoc`.
+* **Traverser Safety Guard**: Introduced `SafeTestBlockExtractorVisitor` to safely bypass raw strings or child objects without a `.name` attribute during AST traversal, preventing crashes on complex unparsed text blocks.
+* **Pytest Discovery Constraints**: Configured `testpaths` under `[tool.pytest.ini_options]` in `pyproject.toml` to restrict search patterns to `tests/` and `README.adoc`, preventing slow recursive runs over external directories.
+
+=== Changed
+* **Upgraded dependencies**:
+  - Bumped `asciidocstring` requirement to `>=0.1.0a4` to support the latest safe parsing mode releases.
+
+---
+
+== [0.1.0a3] - 2026-07-14
+
+=== Changed
+* **Upgraded dependencies**:
+  - Upgraded `asciidoctrine` to `>=0.1.0a8`.
+  - Upgraded `asciidocstring` to `>=0.1.0a3`.
+* **Documentation Casing**: Aligned all references to `asciidoctest` / `AsciiDoctest` to follow standard casing style guide rules (using Title Case `AsciiDoctest` for prose, and lowercase backticks `asciidoctest` for code).
+
+---
+
+== [0.1.0a2] - 2026-07-13
+
+=== Added
+* **Optional test dependencies group**: Added a `[project.optional-dependencies]` section to `pyproject.toml` with a `test` target including `pytest` and `pytest-cov`.
+* **Advanced test coverage validation**: Added robust unit and integration tests covering parser exceptions, doctest unexpected exceptions, and class-level `unittest` TestCase helpers (achieving 97% code coverage).
+* **Footnote macros compatibility verification**: Added a validation suite (`tests/test_footnotes.py`) confirming compatibility with the newly introduced anonymous and named footnotes in the parsing pipeline.
+
+=== Changed
+* **Upgraded dependencies**:
+  - Bumped `asciidoctrine` version requirement to `>=0.1.0a7` to leverage parser newline normalization and native footnotes.
+  - Changed `asciidocstring` version constraint to `>=0.1.0a2`.
+
+=== Fixed
+* **Removed trailing newline workaround**: Cleaned up manual trailing-newline appending in `parser.py`, as standard line termination issues have been natively resolved in the upgraded upstream parser.
+
+---
+
+== [0.1.0a1] - 2026-07-11
+
+=== Added
+* **Initial Release**: Released `asciidoctest` as an alpha utility.
+* **Core sequential runner**: Designed a sequential execution engine supporting variable-state propagation and detailed line mappings.
+* **Pytest integration**: Added file collection hooks and detailed repr-failure reporting.
+* **Unittest integration**: Added standard library `TestSuite` compatibility wrappers (`DocFileSuite` and `DocTestSuite`).
