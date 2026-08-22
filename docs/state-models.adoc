@@ -14,6 +14,39 @@ A block is marked by specifying `test`, `shared`, or `reset` in its block header
 
 == State Models Overview
 
+[cols="1,2,3", options="header"]
+|===
+| Marker / Directive | State Model | Description
+
+| _(No marker)_
+| Static Listing
+| Skipped by default; runs in eager fallback if unmarked document.
+
+| `test`
+| Isolated & Ephemeral (`{}`)
+| Executed in a fresh, clean namespace (`{}`). Local variables and mutations are discarded after execution.
+
+| `shared`
+| Persistent Timeline
+| Continuous sequential document-level shared global namespace (like a notebook). Variables persist across subsequent `shared` blocks.
+
+| `shared, test`
+| Ephemeral Snapshot Copy
+| Inherits a snapshot copy of shared state up to that point; local mutations are discarded when the block completes.
+
+| `shared="name"`
+| Parallel Named Scope
+| Maintains independent persistent state shared only with blocks having the same context name.
+
+| `reset`
+| Explicit State Reset
+| Explicit reset of default & named shared states from that block forward.
+
+| `== Section`
+| Automatic Boundary Reset
+| Section header boundary automatically resets the default shared namespace and named contexts.
+|===
+
 * **No Marker**: Ordinary static code listing (not executed, unless in `eager` fallback mode on unmarked documents).
 * **`test` (Isolated & Ephemeral)**: Executed in a fresh, clean namespace (`{}`). Any local variables or mutations are discarded after the block finishes.
 * **`shared` (Read-Write & Persistent)**: Participates in a continuous document-level shared global namespace (like a notebook). Variables and definitions persist top-to-bottom across subsequent `shared` blocks.
@@ -21,6 +54,7 @@ A block is marked by specifying `test`, `shared`, or `reset` in its block header
 * **Named Contexts (`[source,python,shared="context_name"]`)**: Maintains separate persistent timelines. Blocks sharing the same context name share state with each other independently of the default shared timeline.
 * **Explicit Reset (`[source,python,reset]`)**: Explicitly clears all accumulated shared state and named contexts, starting fresh from that block forward.
 * **Section Boundary Scoping**: In multi-section documents, crossing top-level section boundaries (`==`) automatically resets the default shared namespace and named contexts, isolating independent sections while preserving sequential flow within each section.
+
 
 == Examples
 

@@ -1,5 +1,6 @@
 import doctest
 import traceback
+from collections.abc import Callable
 from typing import Any
 
 from asciidoctest.parser import (
@@ -17,11 +18,22 @@ class AsciiDocTestFailure(AssertionError):
 class CustomDocTestRunner(doctest.DocTestRunner):
     """A customized doctest runner that gathers failures in-memory."""
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.test_failures = []
+    def __init__(
+        self,
+        checker: doctest.OutputChecker | None = None,
+        verbose: bool | None = None,
+        optionflags: int = 0,
+    ) -> None:
+        super().__init__(checker=checker, verbose=verbose, optionflags=optionflags)
+        self.test_failures: list[tuple[doctest.Example, Any, str]] = []
 
-    def report_failure(self, out, test, example, got):
+    def report_failure(
+        self,
+        out: Callable[[str], Any] | Any,
+        test: doctest.DocTest,
+        example: doctest.Example,
+        got: str,
+    ) -> None:
         msg = (
             f"Failed example:\n    {example.source.strip()}\n"
             f"Expected:\n    {example.want.strip()}\n"
@@ -29,13 +41,20 @@ class CustomDocTestRunner(doctest.DocTestRunner):
         )
         self.test_failures.append((example, got, msg))
 
-    def report_unexpected_exception(self, out, test, example, exc_info):
+    def report_unexpected_exception(
+        self,
+        out: Callable[[str], Any] | Any,
+        test: doctest.DocTest,
+        example: doctest.Example,
+        exc_info: Any,
+    ) -> None:
         tb_str = "".join(traceback.format_exception(*exc_info))
         msg = (
             f"Failed example:\n    {example.source.strip()}\n"
             f"Unexpected Exception:\n{tb_str}"
         )
         self.test_failures.append((example, exc_info, msg))
+
 
 
 def run_test_blocks(blocks: list[Any], shared_globals: dict[str, Any]) -> None:

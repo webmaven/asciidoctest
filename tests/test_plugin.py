@@ -123,3 +123,22 @@ def test_adoc_failure_reporting(pytester):
     assert "99" in stdout
     assert "Got:" in stdout
     assert "2" in stdout
+
+
+def test_python_docstring_collection_with_whitespace_spacing(pytester):
+    # Verify pre-filter handles spaces in [source, python]
+    py_content = textwrap.dedent("""\
+        def greet(name):
+            \"\"\"
+            [source,  python , test]
+            ----
+            >>> greet("Alice")
+            'Hello, Alice'
+            ----
+            \"\"\"
+            return f"Hello, {name}"
+        """)
+    pytester.makepyfile(module_ws=py_content)
+    result = pytester.runpytest("-v")
+    result.assert_outcomes(passed=1, failed=0)
+
