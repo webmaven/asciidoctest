@@ -7,17 +7,54 @@ AsciiDoctest provides a unified, symmetric state model across interactive REPL b
 
 == Defining Marked Blocks
 
-A block is marked by specifying `test` or `shared` in its block header:
-* Positional argument: `[source,python,shared]`
-* Explicit attribute: `[source,python,test="true"]`
+A block is marked by specifying `test`, `shared`, or `reset` in its block header:
+* Positional argument: `[source,python,shared]`, `[source,python,reset]`
+* Explicit attribute: `[source,python,test="true"]`, `[source,python,shared="context_name"]`
 * Role attribute: `[source,python,role="test"]`
 
 == State Models Overview
+
+[cols="1,2,3", options="header"]
+|===
+| Marker / Directive | State Model | Description
+
+| _(No marker)_
+| Static Listing
+| Skipped by default; runs in eager fallback if unmarked document.
+
+| `test`
+| Isolated & Ephemeral (`{}`)
+| Executed in a fresh, clean namespace (`{}`). Local variables and mutations are discarded after execution.
+
+| `shared`
+| Persistent Timeline
+| Continuous sequential document-level shared global namespace (like a notebook). Variables persist across subsequent `shared` blocks.
+
+| `shared, test`
+| Ephemeral Snapshot Copy
+| Inherits a snapshot copy of shared state up to that point; local mutations are discarded when the block completes.
+
+| `shared="name"`
+| Parallel Named Scope
+| Maintains independent persistent state shared only with blocks having the same context name.
+
+| `reset`
+| Explicit State Reset
+| Explicit reset of default & named shared states from that block forward.
+
+| `== Section`
+| Automatic Boundary Reset
+| Section header boundary automatically resets the default shared namespace and named contexts.
+|===
 
 * **No Marker**: Ordinary static code listing (not executed, unless in `eager` fallback mode on unmarked documents).
 * **`test` (Isolated & Ephemeral)**: Executed in a fresh, clean namespace (`{}`). Any local variables or mutations are discarded after the block finishes.
 * **`shared` (Read-Write & Persistent)**: Participates in a continuous document-level shared global namespace (like a notebook). Variables and definitions persist top-to-bottom across subsequent `shared` blocks.
 * **`shared, test` (Ephemeral Copy)**: Inherits a snapshot copy of the shared state up to that point, but any mutations made inside the block are discarded when the block completes.
+* **Named Contexts (`[source,python,shared="context_name"]`)**: Maintains separate persistent timelines. Blocks sharing the same context name share state with each other independently of the default shared timeline.
+* **Explicit Reset (`[source,python,reset]`)**: Explicitly clears all accumulated shared state and named contexts, starting fresh from that block forward.
+* **Section Boundary Scoping**: In multi-section documents, crossing top-level section boundaries (`==`) automatically resets the default shared namespace and named contexts, isolating independent sections while preserving sequential flow within each section.
+
 
 == Examples
 
@@ -66,4 +103,85 @@ modified value
 ----
 >>> print(x)
 asciidoctest
+----
+
+=== Named Context Scopes (`shared="<name>"`)
+
+Independent state timelines can run in parallel within the same document using named contexts.
+Blocks sharing the same context name share state with each other but are fully isolated from
+the default shared namespace and from other named contexts.
+
+[source,python,shared="db_context"]
+----
+connection = "postgres://localhost/mydb"
+records = [{"id": 1, "name": "Alice"}]
+----
+
+[source,python,shared="cache_context"]
+----
+cache = {}
+cache["session_42"] = {"user": "Alice", "role": "admin"}
+----
+
+Subsequent blocks in the same context see accumulated state; blocks in a different context do not:
+
+[source,python,shared="db_context"]
+----
+assert connection == "postgres://localhost/mydb"
+assert len(records) == 1
+# 'cache' lives in "cache_context" and is NOT visible here
+----
+
+[source,python,shared="cache_context"]
+----
+assert cache["session_42"]["role"] == "admin"
+# 'connection' lives in "db_context" and is NOT visible here
+----
+
+=== Explicit Reset (`reset`)
+
+Use `[source,python,reset]` to explicitly clear all accumulated shared state and named
+contexts at any point in the document, starting fresh from that block forward.
+
+[source,python,shared]
+----
+setup_value = 42
+----
+
+[source,python,reset]
+----
+# Executes in a fresh namespace. setup_value has been cleared.
+pass
+----
+
+[source,python,shared]
+----
+# Shared namespace is now empty — setup_value is gone.
+assert "setup_value" not in dir()
+new_value = 99
+----
+
+=== Section Boundary Scoping (`== Section`)
+
+When a document has multiple top-level sections (`==`), crossing a section boundary
+automatically resets the default shared namespace and all named contexts, preventing
+state from leaking between unrelated topics or API groups.
+
+[source,adoc]
+----
+== First Section
+
+[source,python,shared]
+\----
+section_one_var = "hello"
+\----
+
+== Second Section
+
+[source,python,shared]
+\----
+// section_one_var is NOT accessible here — the boundary reset cleared it.
+assert "section_one_var" not in dir()
+section_two_var = "world"
+\----
 ----

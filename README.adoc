@@ -29,18 +29,22 @@ Writing a multi-step tutorial, interactive guide, or documentation book often re
 
 AsciiDoctest provides a unified, symmetric state model across both interactive REPL blocks and non-interactive script blocks to facilitate predictable, stateful documentation.
 
-A Python code block is considered **marked** when it contains the `test` or `shared` keyword inside its block header—either as a positional argument (e.g., `[source,python,test]`), an explicit attribute (e.g., `[source,python,test="true"]`), or a block role (e.g., `[source,python,role="shared"]`).
+A Python code block is considered **marked** when it contains the `test`, `shared`, or `reset` keyword inside its block header—either as a positional argument (e.g., `[source,python,test]`), an explicit attribute (e.g., `[source,python,test="true"]`), or a block role (e.g., `[source,python,role="shared"]`).
 
 Based on these markers, blocks are executed under the following models:
 
 * **No Marker or Attribute**: Treated as an ordinary, non-executable code listing.
 +
---
+~~~~
 *Exception*: In `eager` mode, unmarked listings are executed as `test` blocks (fully isolated and ephemeral) ONLY if no block in the entire document has any explicit markers of either sort.
---
+~~~~
 * **`test` (Isolated & Ephemeral)**: Runs in a completely clean, isolated namespace (`{}`). Any variables or state changes created during its execution are immediately discarded. This aligns with standard unit-testing isolation principles.
 * **`shared` (Read-Write & Persistent)**: Participates in a continuous, stateful document timeline (like a stateful notebook). Any classes, variables, or functions defined in early `shared` blocks are fully accessible and modifiable in subsequent `shared` blocks.
 * **`shared, test` (Ephemeral Copy)**: Gets access to a read-only copy of the shared state *at that point in the document*, but any mutations or local bindings created within the block are discarded when the block completes.
+* **Named Contexts (`[source,python,shared="context_name"]`)**: Maintains separate, persistent state timelines. Blocks specifying the same `shared="<name>"` attribute share state with each other, completely independent of the default shared timeline.
+* **Explicit Reset (`[source,python,reset]`)**: Clears accumulated shared state and named contexts, providing a fresh execution environment from that block forward.
+* **Section Boundary Scoping**: In multi-section documents, moving across top-level section boundaries (`== Section One` to `== Section Two`) automatically resets the default shared namespace and named contexts. This prevents state leakage between unrelated classes, functions, or narrative topics while preserving sequential flow within each section.
+* **Tolerant Illustrative Includes**: By default, include directives (`include::...[]`) are ignored during doctest extraction (`preprocess_directives=False`), allowing illustrative code references in documentation without requiring referenced files to exist on disk.
 
 This model is extremely consistent, easy to reason about, and ensures that your documentation's code examples are always accurate and tested.
 
@@ -48,8 +52,14 @@ This model is extremely consistent, easy to reason about, and ensures that your 
 
 * **AST-Based Parsing**: Structural parsing using link:https://github.com/webmaven/asciidoctrine[asciidoctrine] (AsciiDoc parser) and link:https://github.com/webmaven/asciidocstring[asciidocstring] (AsciiDoc docstring parser).
 * **Execution Modes**:
-  - `explicit` (default): Only executes blocks with the `test` or `shared` markers.
+  - `explicit` (default): Only executes blocks with explicit markers (`test`, `shared`, or `reset`).
   - `eager`: Falls back to executing all `[source,python]` listings as isolated `test` blocks, but only if the document contains zero explicit markers.
+* **Section Scoping & Context Management**:
+  - Top-level section boundary resets (`==`) isolating document sections.
+  - Named context scopes (`[source,python,shared="context_name"]`) for parallel shared state timelines.
+  - Explicit reset markers (`[source,python,reset]`) for manual state resets.
+* **Direct Python & Docstring Extraction**: Programmatic API (`extract_and_run_docstring_tests`) to extract and run doctests from `.py` files, directories, or loaded modules with per-symbol scope isolation.
+* **Tolerant Include Handling**: Illustrative includes are safely skipped during AST extraction (`preprocess_directives=False`), preventing missing file errors for documentation-only references.
 * **Pytest Integration**: Automatic discovery and execution of `.adoc` files and Python docstrings via registered link:https://docs.pytest.org/[pytest] collectors.
 * **Unittest Compatibility**: Suite wrappers (`DocTestSuite` and `DocFileSuite`) designed to integrate with the standard library link:https://docs.python.org/3/library/unittest.html[unittest] runner.
 
@@ -100,6 +110,26 @@ def suite():
 
 if __name__ == "__main__":
     unittest.main(defaultTest="suite")
+----
+
+== Direct Docstring Extraction API
+
+In addition to pytest and unittest runners, AsciiDoctest provides a direct programmatic API `extract_and_run_docstring_tests` to discover and run docstring doctests directly on files, directories, or module objects:
+
+[source,python]
+----
+from asciidoctest import extract_and_run_docstring_tests
+
+# Run doctests on a single Python source file
+stats = extract_and_run_docstring_tests("src/mypackage/utils.py")
+print(stats)  # => {'total': 3, 'passed': 3, 'failed': 0}
+
+# Run doctests across an entire directory tree
+stats = extract_and_run_docstring_tests("src/mypackage/")
+
+# Run doctests directly on an imported module
+import mypackage
+stats = extract_and_run_docstring_tests(mypackage)
 ----
 
 == Examples
@@ -162,6 +192,45 @@ To demonstrate that the changes in the `shared, test` block were indeed discarde
 ----
 >>> print(x)
 asciidoctest
+----
+
+=== Named Context Scopes
+
+You can maintain multiple distinct, persistent timelines using named context scopes. For example, database and cache states can evolve independently:
+
+[source,python,shared="db_context"]
+----
+>>> db_conn = {"status": "connected", "database": "users"}
+>>> db_conn["status"]
+'connected'
+----
+
+[source,python,shared="cache_context"]
+----
+>>> cache = {"user:1": "Alice"}
+>>> "db_conn" in dir() or "db_conn" in locals()
+False
+----
+
+[source,python,shared="db_context"]
+----
+>>> db_conn["database"]
+'users'
+>>> "cache" in dir() or "cache" in locals()
+False
+----
+
+=== Explicit Reset Markers
+
+You can explicitly reset the shared state at any point using the `reset` marker:
+
+[source,python,reset,shared]
+----
+>>> "x" in dir() or "x" in locals()
+False
+>>> x = "fresh_start"
+>>> x
+'fresh_start'
 ----
 
 == Contributing

@@ -3,6 +3,35 @@
 
 This document lists all notable changes and releases for `asciidoctest`.
 
+== [0.2.0a3] - 2026-08-22
+
+=== Added
+* **Section Scoping, Named Contexts & Reset Markers (Issue #2)**:
+  - **AST Section Boundary Scoping**: Automatic shared state reset when traversing across top-level section boundaries (`==`), isolating independent document chapters, classes, and topics while preserving sequential state flow within each section.
+  - **Named Context Scopes**: Introduced `[source,python,shared="<name>"]` support to allow multiple independent, persistent state timelines within the same document.
+  - **Explicit Reset Markers**: Added `[source,python,reset]` and `[source,python,reset,shared]` directives (also accepting `shared="none"` or `shared="reset"`) to clear all accumulated shared state and named contexts on demand.
+* **Direct Doctest Extraction API (Issue #3)**:
+  - Added `asciidoctest.extract_and_run_docstring_tests(source_path_or_module, mode="explicit")` for programmatic discovery and execution of doctests from Python source files, package directories, or imported module objects.
+  - Added `find_docstrings_in_py_file` in `asciidoctest.parser` for AST-based static docstring discovery without running module code during parsing.
+* **PEP 561 Type Information**: Added `asciidoctest/py.typed` marker (PEP 561) so downstream projects using mypy or pyright receive full type information from `asciidoctest`.
+* **Top-level `AsciiDocTestFailure` export**: `AsciiDocTestFailure` is now re-exported from `asciidoctest.__init__` and included in `__all__`, enabling `from asciidoctest import AsciiDocTestFailure` without submodule access.
+* **Contextual failure messages**: `AsciiDocTestFailure` raised during directory or module docstring extraction now includes `[filepath:symbol]` context so the failing file and function are immediately identifiable.
+* **State model quick-reference table**: Added a comprehensive marker/namespace cheatsheet table to `docs/getting-started.adoc` and `docs/state-models.adoc`.
+
+=== Fixed
+* **Tolerant Illustrative Includes (Issue #1)**:
+  - Disabled include preprocessing by default (`preprocess_directives=False`) during AsciiDoc doctest parsing, allowing illustrative or documentation-only `include::...[]` macros without requiring target files to exist on disk.
+* **Pytest pre-filter spacing tolerance (DX)**: Updated the `.py` file pre-filter in `pytest_plugin.py` from a plain string check (`"[source,python"`) to a regex (`re.search(r"\[source\s*,\s*python", content)`), correctly handling AsciiDoc block headers with spaces after commas (e.g. `[source, python, test]`).
+* **`shared="none"` and `shared="reset"` not triggering reset (Issue #10)**: `block_get_shared_context` now correctly treats `shared="none"` and `shared="reset"` (case-insensitive) as falsy values that do not create named contexts, consistent with the CHANGELOG documentation.
+
+=== Changed
+* **Upgraded Dependencies**:
+  - Upgraded `asciidoctrine` dependency requirement to `>=0.2.0a2`.
+  - Upgraded `asciidocstring` dependency requirement to `>=0.1.0a7`.
+* **`mypy --strict` compliance**: Resolved all 32 strict typing violations across `parser.py`, `runner.py`, `unittest_integration.py`, and `pytest_plugin.py`. `mypy --strict asciidoctest` now reports zero errors.
+
+---
+
 == [0.2.0a2] - 2026-07-31
 
 === Added
