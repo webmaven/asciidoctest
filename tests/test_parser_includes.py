@@ -1,5 +1,7 @@
 import textwrap
+
 import pytest
+
 from asciidoctest.parser import parse_adoc_tests
 from asciidoctest.runner import run_test_blocks
 
@@ -38,3 +40,19 @@ def test_parse_adoc_with_custom_preprocess_directives_flag():
         """)
     blocks = parse_adoc_tests(content, mode="explicit", preprocess_directives=False)
     assert len(blocks) == 1
+
+
+def test_parse_adoc_with_preprocess_directives_raises_on_missing_include():
+    content = textwrap.dedent("""\
+        = Document with Missing Include
+
+        include::non_existent_file_mandatory.adoc[]
+
+        [source,python,test]
+        ----
+        x = 10
+        assert x == 10
+        ----
+        """)
+    with pytest.raises(ValueError, match="Include file not found"):
+        parse_adoc_tests(content, mode="explicit", preprocess_directives=True)
