@@ -16,27 +16,22 @@ We warmly welcome contributions of all kinds! Whether you are fixing a bug, addi
 [source,mermaid]
 ----
 graph TD
-    A[Source Files: .adoc, .py, Modules] --> B[pytest_plugin / unittest_integration / docstring_extractor]
+    A[Source Files: .adoc, .py] --> B[pytest_plugin / unittest_integration]
     B --> C[parser.py]
     C --> D[asciidoctrine / asciidocstring]
-    D --> E[TestBlock List + Section IDs]
+    D --> E[TestBlock List]
     E --> F[runner.py]
     F --> G[CustomDocTestRunner / exec]
 ----
 
-* **`parser.py`**: Extracts test blocks using link:https://github.com/webmaven/asciidoctrine[`asciidoctrine`] (with `preprocess_directives=False` by default to tolerate illustrative includes) and link:https://github.com/webmaven/asciidocstring[`asciidocstring`] (for Python docstrings). Tracks top-level section boundaries via `SafeTestBlockExtractorVisitor`, parses marker attributes (`test`, `shared`, `reset`), and extracts named context scopes (`shared="<name>"`). Also statically discovers docstrings in Python source files via `find_docstrings_in_py_file`.
-* **`runner.py`**: Coordinates execution across interactive REPL blocks and non-interactive script blocks. Enforces namespace scoping, automatic section boundary resets, explicit `reset` directives, and named context state maps.
-* **`docstring_extractor.py`**: Implements the direct programmatic API `extract_and_run_docstring_tests` to discover, extract, and execute doctests from Python files, directories, or loaded modules with per-symbol scope isolation.
+* **`parser.py`**: Extracts test blocks using link:https://github.com/webmaven/asciidoctrine[`asciidoctrine`] (for standalone documents) and link:https://github.com/webmaven/asciidocstring[`asciidocstring`] (for Python docstrings). Supports `explicit` (default) and `eager` matching.
+* **`runner.py`**: Coordinates execution. Interactive prompts are evaluated via `doctest.DocTestParser` and a custom `doctest.DocTestRunner` subclass. Non-interactive blocks are compiled and run via `exec()`. State is shared sequentially top-to-bottom across consecutive blocks inside a single standalone document.
 * **`pytest_plugin.py`**: Discovers files statically, collects docstrings from Python modules without executing code during discovery, and handles test execution and error formatting for link:https://docs.pytest.org/[pytest].
 * **`unittest_integration.py`**: Wraps test collection and execution in standard library link:https://docs.python.org/3/library/unittest.html[unittest] adapters (`DocFileSuite` and `DocTestSuite`).
 
 == Testing and Coverage
 
 * **`tests/test_runner.py`**: Tests runner mechanics and state persistence.
-* **`tests/test_scoping.py`**: Tests named context scopes and explicit reset markers.
-* **`tests/test_section_scoping.py`**: Tests top-level AST section boundary resets.
-* **`tests/test_parser_includes.py`**: Tests tolerant illustrative include directive handling (`preprocess_directives=False`).
-* **`tests/test_docstring_extraction.py`**: Tests direct Python docstring extraction across files, directories, and modules.
 * **`tests/test_plugin.py`**: Validates basic pytest collection.
 * **`tests/test_plugin_coverage.py`**: Tests error boundaries and collection failures.
 * **`tests/test_unittest_integration.py`**: Tests unittest adapters.

@@ -1,7 +1,6 @@
 import inspect
 import pathlib
 import sys
-import types
 import unittest
 from typing import Any
 
@@ -12,23 +11,23 @@ from asciidoctest.runner import run_test_blocks
 class AsciiDocTestCase(unittest.TestCase):
     """TestCase representing sequential execution of test blocks in an .adoc file."""
 
-    def __init__(self, name: str, blocks: list[Any], description: str = "") -> None:
+    def __init__(self, name: str, blocks: list[Any], description: str = ""):
         super().__init__()
         self._name = name
         self._blocks = blocks
         self._description = description
 
-    def runTest(self) -> None:
-        shared_globals: dict[str, Any] = {}
+    def runTest(self):
+        shared_globals = {}
         run_test_blocks(self._blocks, shared_globals)
 
-    def id(self) -> str:
+    def id(self):
         return self._name
 
-    def shortDescription(self) -> str | None:
+    def shortDescription(self):
         return self._description or self._name
 
-    def __str__(self) -> str:
+    def __str__(self):
         return f"{self._name} ({self.__class__.__module__}.{self.__class__.__name__})"
 
 
@@ -41,29 +40,29 @@ class DocstringTestCase(unittest.TestCase):
         blocks: list[Any],
         module_globals: dict[str, Any],
         description: str = "",
-    ) -> None:
+    ):
         super().__init__()
         self._name = name
         self._blocks = blocks
         self._module_globals = module_globals
         self._description = description
 
-    def runTest(self) -> None:
+    def runTest(self):
         # Execute in a copy of the module globals to avoid state leakage across docstrings
         globals_copy = dict(self._module_globals)
         run_test_blocks(self._blocks, globals_copy)
 
-    def id(self) -> str:
+    def id(self):
         return self._name
 
-    def shortDescription(self) -> str | None:
+    def shortDescription(self):
         return self._description or self._name
 
-    def __str__(self) -> str:
+    def __str__(self):
         return f"{self._name} ({self.__class__.__module__}.{self.__class__.__name__})"
 
 
-def DocFileSuite(*paths: str | pathlib.Path, **kwargs: Any) -> unittest.TestSuite:
+def DocFileSuite(*paths, **kwargs) -> unittest.TestSuite:
     """
     Creates a unittest.TestSuite for running test blocks extracted from AsciiDoc files.
     """
@@ -85,7 +84,7 @@ def DocFileSuite(*paths: str | pathlib.Path, **kwargs: Any) -> unittest.TestSuit
     return suite
 
 
-def DocTestSuite(module: str | types.ModuleType, **kwargs: Any) -> unittest.TestSuite:
+def DocTestSuite(module, **kwargs) -> unittest.TestSuite:
     """
     Creates a unittest.TestSuite for running AsciiDoc docstring tests from a module.
     """
@@ -100,12 +99,12 @@ def DocTestSuite(module: str | types.ModuleType, **kwargs: Any) -> unittest.Test
         mod = module
 
     suite = unittest.TestSuite()
-    discovered: set[int] = set()
+    discovered = set()
 
-    def process_object(name: str, obj: Any) -> None:
-        if id(obj) in discovered:
+    def process_object(name: str, obj: Any):
+        if obj in discovered:
             return
-        discovered.add(id(obj))
+        discovered.add(obj)
 
         docstring = inspect.getdoc(obj)
         if docstring:

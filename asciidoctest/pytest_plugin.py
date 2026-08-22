@@ -1,22 +1,14 @@
+import ast
 import importlib.util
-import pathlib
-import re
 import sys
-from collections.abc import Iterable
-from typing import Any
 
 import pytest
-from _pytest._code.code import ExceptionInfo, TerminalRepr
 
-from asciidoctest.parser import (
-    extract_docstring_tests,
-    find_docstrings_in_py_file,
-    parse_adoc_tests,
-)
+from asciidoctest.parser import extract_docstring_tests, parse_adoc_tests
 from asciidoctest.runner import AsciiDocTestFailure, run_test_blocks
 
 
-def pytest_addoption(parser: pytest.Parser) -> None:
+def pytest_addoption(parser):
     """Register custom command-line and ini configuration options."""
     group = parser.getgroup("asciidoctest")
     group.addoption(
@@ -33,9 +25,7 @@ def pytest_addoption(parser: pytest.Parser) -> None:
     )
 
 
-def pytest_collect_file(
-    file_path: pathlib.Path, parent: pytest.Collector
-) -> pytest.Collector | None:
+def pytest_collect_file(file_path, parent):
     """Hook into file discovery to collect .adoc and .py files."""
     if file_path.suffix == ".adoc":
         return AsciiDocFile.from_parent(parent, path=file_path)
@@ -43,17 +33,41 @@ def pytest_collect_file(
         try:
             content = file_path.read_text("utf-8")
             # Quick pre-filter to keep discovery extremely fast
-            if re.search(r"\[source\s*,\s*python", content):
+            if "[source,python" in content:
                 return PythonDocstringFile.from_parent(parent, path=file_path)
         except Exception:
             pass
     return None
 
 
+def find_docstrings_in_py_file(path) -> list[tuple[str, int, str]]:
+    """Statically parse a Python file and return all docstrings with metadata."""
+    content = path.read_text("utf-8")
+    try:
+        tree = ast.parse(content)
+    except SyntaxError, ValueError:
+        return []
+
+    docstrings = []
+
+    # Simple AST visitor to extract docstrings and their containing names/lines
+    for node in ast.walk(tree):
+        if isinstance(
+            node, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef, ast.Module)
+        ):
+            docstring = ast.get_docstring(node)
+            if docstring:
+                lineno = getattr(node, "lineno", 1)
+                name = node.name if hasattr(node, "name") else "<module>"
+                docstrings.append((name, lineno, docstring))
+
+    return docstrings
+
+
 class AsciiDocFile(pytest.File):
     """Custom collector for standalone .adoc files."""
 
-    def collect(self) -> Iterable[pytest.Item | pytest.Collector]:
+    def collect(self):
         # Retrieve the mode option, default to 'explicit'
         mode = (
             self.config.getoption("--asciidoctest-mode")
@@ -74,31 +88,27 @@ class AsciiDocFile(pytest.File):
 class AsciiDocItem(pytest.Item):
     """Test execution item for standalone AsciiDoc files."""
 
-    def __init__(self, name: str, parent: pytest.Collector, blocks: list[Any]) -> None:
+    def __init__(self, name, parent, blocks):
         super().__init__(name, parent)
         self.blocks = blocks
 
-    def runtest(self) -> None:
-        shared_globals: dict[str, Any] = {}
+    def runtest(self):
+        shared_globals = {}
         run_test_blocks(self.blocks, shared_globals)
 
-    def repr_failure(
-        self,
-        excinfo: ExceptionInfo[BaseException],
-        style: Any = None,
-    ) -> str | TerminalRepr:
+    def repr_failure(self, excinfo):
         if isinstance(excinfo.value, AsciiDocTestFailure):
             return str(excinfo.value)
-        return super().repr_failure(excinfo, style=style)
+        return super().repr_failure(excinfo)
 
-    def reportinfo(self) -> tuple[pathlib.Path | str, int | None, str]:
+    def reportinfo(self):
         return self.path, 0, f"AsciiDoc Document: {self.name}"
 
 
 class PythonDocstringFile(pytest.File):
     """Custom collector for Python files with AsciiDoc-formatted docstrings."""
 
-    def collect(self) -> Iterable[pytest.Item | pytest.Collector]:
+    def collect(self):
         try:
             docstrings = find_docstrings_in_py_file(self.path)
         except Exception:
@@ -124,14 +134,12 @@ class PythonDocstringFile(pytest.File):
 class DocstringTestItem(pytest.Item):
     """Test execution item for Python docstring test blocks."""
 
-    def __init__(
-        self, name: str, parent: pytest.Collector, lineno: int, blocks: list[Any]
-    ) -> None:
+    def __init__(self, name, parent, lineno, blocks):
         super().__init__(name, parent)
         self.lineno = lineno
         self.blocks = blocks
 
-    def runtest(self) -> None:
+    def runtest(self):
         # Dynamically load the containing module
         module_name = self.path.stem
         spec = importlib.util.spec_from_file_location(module_name, self.path)
@@ -149,14 +157,10 @@ class DocstringTestItem(pytest.Item):
         globals_copy = dict(module.__dict__)
         run_test_blocks(self.blocks, globals_copy)
 
-    def repr_failure(
-        self,
-        excinfo: ExceptionInfo[BaseException],
-        style: Any = None,
-    ) -> str | TerminalRepr:
+    def repr_failure(self, excinfo):
         if isinstance(excinfo.value, AsciiDocTestFailure):
             return str(excinfo.value)
-        return super().repr_failure(excinfo, style=style)
+        return super().repr_failure(excinfo)
 
-    def reportinfo(self) -> tuple[pathlib.Path | str, int | None, str]:
+    def reportinfo(self):
         return self.path, self.lineno, f"Python Docstring: {self.name}"
