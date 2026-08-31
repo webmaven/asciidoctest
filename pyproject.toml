@@ -58,6 +58,13 @@ testpaths = [
 ]
 asyncio_default_fixture_loop_scope = "function"
 
+[tool.coverage.run]
+source = ["asciidoctest"]
+omit = ["tests/*"]
+
+[tool.coverage.report]
+show_missing = true
+
 [tool.ruff]
 target-version = "py314"
 line-length = 88
