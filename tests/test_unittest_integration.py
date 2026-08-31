@@ -276,6 +276,7 @@ class TestUnittestIntegration(unittest.TestCase):
 
     def test_doc_test_suite_import_by_string_not_in_sys_modules(self):
         import tempfile
+
         # Create a temporary python module file in a temp directory
         with tempfile.TemporaryDirectory() as tmp_dir:
             mod_file = pathlib.Path(tmp_dir) / "unimported_sample_mod.py"
@@ -348,4 +349,3 @@ class TestUnittestIntegration(unittest.TestCase):
 
         # Reload module during test execution to ensure definition lines are traced by coverage
         importlib.reload(asciidoctest.unittest_integration)
-

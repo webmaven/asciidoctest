@@ -143,14 +143,18 @@ def test_pytest_collect_file_py_with_markers(
 
     # Exact match [source,python
     py1 = tmp_path / "exact.py"
-    py1.write_text('"""\n[source,python,test]\n----\n>>> 1\n1\n----\n"""\n', encoding="utf-8")
+    py1.write_text(
+        '"""\n[source,python,test]\n----\n>>> 1\n1\n----\n"""\n', encoding="utf-8"
+    )
     collector1 = pytest_collect_file(py1, session)
     assert isinstance(collector1, PythonDocstringFile)
     assert collector1.path == py1
 
     # Whitespace match [source , python
     py2 = tmp_path / "spaced.py"
-    py2.write_text('"""\n[source , python , test]\n----\n>>> 2\n2\n----\n"""\n', encoding="utf-8")
+    py2.write_text(
+        '"""\n[source , python , test]\n----\n>>> 2\n2\n----\n"""\n', encoding="utf-8"
+    )
     collector2 = pytest_collect_file(py2, session)
     assert isinstance(collector2, PythonDocstringFile)
     assert collector2.path == py2
@@ -297,7 +301,9 @@ def test_asciidoc_file_collect_parse_failure(
         "asciidoctest.pytest_plugin.parse_adoc_tests",
         side_effect=RuntimeError("Corrupt structure"),
     ):
-        with pytest.raises(ValueError, match="Failed to parse AsciiDoc file.*Corrupt structure"):
+        with pytest.raises(
+            ValueError, match="Failed to parse AsciiDoc file.*Corrupt structure"
+        ):
             list(collector.collect())
 
 
@@ -350,9 +356,7 @@ def test_asciidoc_item_runtest_success(
         attributes={"test": True},
     )
 
-    item = AsciiDocItem.from_parent(
-        parent_file, name="asciidoctest", blocks=[block1]
-    )
+    item = AsciiDocItem.from_parent(parent_file, name="asciidoctest", blocks=[block1])
     # Should run without error
     item.runtest()
 
@@ -671,7 +675,9 @@ def test_docstring_test_item_runtest_module_exec_error(
 ) -> None:
     """DocstringTestItem.runtest raises RuntimeError when module execution fails."""
     py_file = tmp_path / "broken_exec.py"
-    py_file.write_text("raise ValueError('Import failed on import')\n", encoding="utf-8")
+    py_file.write_text(
+        "raise ValueError('Import failed on import')\n", encoding="utf-8"
+    )
     parent_file = PythonDocstringFile.from_parent(request.session, path=py_file)
 
     item = DocstringTestItem.from_parent(
@@ -679,7 +685,8 @@ def test_docstring_test_item_runtest_module_exec_error(
     )
 
     with pytest.raises(
-        RuntimeError, match="Error executing module broken_exec: Import failed on import"
+        RuntimeError,
+        match="Error executing module broken_exec: Import failed on import",
     ):
         item.runtest()
 
