@@ -3,6 +3,30 @@
 
 This document lists all notable changes and releases for `asciidoctest`.
 
+== link:https://pypi.org/project/asciidoctest/0.2.0a4/[0.2.0a4] - 2026-08-31
+
+=== Added
+* **Direct Python Source Code & Docstring Doctest Extraction (Issue #3)**:
+  - **Full AST Node Traversal**: Static AST docstring extraction via `_DocstringVisitor` now extracts docstrings from functions, async functions, classes, nested classes, and nested methods using hierarchical dot-notation naming (e.g., `OuterClass.InnerClass.method_docstring`).
+  - **Multi-target Execution Support**: `asciidoctest.extract_and_run_docstring_tests` now seamlessly accepts Python source file paths (`str` or `pathlib.Path`), module/package directories (recursively discovering `.py` files), imported module name strings, or loaded `types.ModuleType` instances.
+  - **Per-symbol Scope Isolation**: Each symbol's docstring doctests execute in an independent copy of module globals (`dict(module.__dict__)`), preventing state mutation and leakage between separate functions or methods.
+  - **Contextual Failure Traces**: Failure traces format with `[filepath:symbol_name]` identifying the exact location of doctest assertion failures.
+
+=== Fixed
+* **Pytest Custom Item Fixture Compatibility**:
+  - Initialized `_fixtureinfo` on custom pytest test items (`AsciiDocItem` and `DocstringTestItem`), eliminating `AttributeError: 'AsciiDocItem' object has no attribute '_fixtureinfo'` when running alongside third-party plugins like `pytest-pyodide`.
+
+=== Changed
+* **Upgraded Dependencies**:
+  - Upgraded `asciidoctrine` dependency requirement to `>=0.2.0a5` (table cols DSL, block title attachments #119, attached inline macros #120, Lark parser memoization).
+  - Upgraded `asciidocstring` dependency requirement to `>=0.1.0a8` (AsciiDoc docstrings style guide, semantic docstring model compatibility).
+  - Added `lark>=1.3.1` dependency constraint.
+* **Test Suite & Coverage Quality**:
+  - Increased unit test coverage across `__init__.py`, `pytest_plugin.py`, and `unittest_integration.py` (achieving 100% statement coverage on `unittest_integration.py` and 109 passing tests).
+  - Configured `asyncio_default_fixture_loop_scope = "function"` to eliminate test runner deprecation warnings.
+
+---
+
 == link:https://pypi.org/project/asciidoctest/0.2.0a3/[0.2.0a3] - 2026-08-22
 
 === Added

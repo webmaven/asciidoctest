@@ -192,25 +192,61 @@ def extract_docstring_tests(docstring: str, mode: str = "explicit") -> list[Any]
         return []
 
 
+class _DocstringVisitor(ast.NodeVisitor):
+    def __init__(self) -> None:
+        self.docstrings: list[tuple[str, int, str]] = []
+        self.scope_stack: list[str] = []
+
+    def _get_name(self, base_name: str) -> str:
+        if self.scope_stack:
+            return ".".join(self.scope_stack) + "." + base_name
+        return base_name
+
+    def visit_Module(self, node: ast.Module) -> None:
+        docstring = ast.get_docstring(node)
+        if docstring:
+            self.docstrings.append(("<module>", 1, docstring))
+        self.generic_visit(node)
+
+    def visit_FunctionDef(self, node: ast.FunctionDef) -> None:
+        docstring = ast.get_docstring(node)
+        full_name = self._get_name(node.name)
+        if docstring:
+            self.docstrings.append((full_name, getattr(node, "lineno", 1), docstring))
+        self.scope_stack.append(node.name)
+        self.generic_visit(node)
+        self.scope_stack.pop()
+
+    def visit_AsyncFunctionDef(self, node: ast.AsyncFunctionDef) -> None:
+        docstring = ast.get_docstring(node)
+        full_name = self._get_name(node.name)
+        if docstring:
+            self.docstrings.append((full_name, getattr(node, "lineno", 1), docstring))
+        self.scope_stack.append(node.name)
+        self.generic_visit(node)
+        self.scope_stack.pop()
+
+    def visit_ClassDef(self, node: ast.ClassDef) -> None:
+        docstring = ast.get_docstring(node)
+        full_name = self._get_name(node.name)
+        if docstring:
+            self.docstrings.append((full_name, getattr(node, "lineno", 1), docstring))
+        self.scope_stack.append(node.name)
+        self.generic_visit(node)
+        self.scope_stack.pop()
+
+
 def find_docstrings_in_py_file(
     path: str | pathlib.Path,
 ) -> list[tuple[str, int, str]]:
     """Statically parse a Python file and return all docstrings with metadata."""
     p = pathlib.Path(path)
-    content = p.read_text("utf-8")
     try:
+        content = p.read_text("utf-8")
         tree = ast.parse(content)
-    except SyntaxError, ValueError:
+    except SyntaxError, ValueError, OSError, UnicodeDecodeError:
         return []
 
-    docstrings = []
-    for node in ast.walk(tree):
-        if isinstance(
-            node, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef, ast.Module)
-        ):
-            docstring = ast.get_docstring(node)
-            if docstring:
-                lineno = getattr(node, "lineno", 1)
-                name = node.name if hasattr(node, "name") else "<module>"
-                docstrings.append((name, lineno, docstring))
-    return docstrings
+    visitor = _DocstringVisitor()
+    visitor.visit(tree)
+    return visitor.docstrings

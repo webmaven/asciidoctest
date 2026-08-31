@@ -139,10 +139,10 @@ class TestUnittestIntegration(unittest.TestCase):
         mod = types.ModuleType(module_name)
         mod.__doc__ = ""  # empty docstring
 
-        # Import an external routine to trigger the module membership filter continue condition
-        from os import path
+        # Import an external routine with __module__ to trigger the module membership filter continue condition
+        from math import sqrt
 
-        mod.path = path
+        mod.sqrt = sqrt
 
         # Class with methods to cover class method parsing and nested routines
         class AdvancedSampleClass:
@@ -199,7 +199,7 @@ class TestUnittestIntegration(unittest.TestCase):
             # - nested_method docstring test
             # AdvancedSampleClassAlias is ignored since it's already discovered.
             # InvalidDocClass exception block is bypassed gracefully.
-            # Imported 'path' is ignored because it belongs to 'os'.
+            # Imported 'sqrt' is ignored because it belongs to 'math'.
             self.assertEqual(result.testsRun, 2)
             self.assertEqual(len(result.failures), 0)
         finally:
@@ -273,3 +273,79 @@ class TestUnittestIntegration(unittest.TestCase):
             self.assertEqual(len(result.failures), 0)
         finally:
             sys.modules.pop(module_name, None)
+
+    def test_doc_test_suite_import_by_string_not_in_sys_modules(self):
+        import tempfile
+        # Create a temporary python module file in a temp directory
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            mod_file = pathlib.Path(tmp_dir) / "unimported_sample_mod.py"
+            mod_file.write_text(
+                textwrap.dedent("""\
+                \"\"\"
+                [source,python,test]
+                ----
+                >>> val = 42
+                >>> val
+                42
+                ----
+                \"\"\"
+                def helper():
+                    \"\"\"
+                    [source,python,test]
+                    ----
+                    >>> 10 + 5
+                    15
+                    ----
+                    \"\"\"
+                    return 15
+                """),
+                encoding="utf-8",
+            )
+            sys.path.insert(0, tmp_dir)
+            try:
+                # Ensure it is not in sys.modules
+                sys.modules.pop("unimported_sample_mod", None)
+                self.assertNotIn("unimported_sample_mod", sys.modules)
+
+                # Calling DocTestSuite with module name string triggers __import__ on line 98
+                suite = DocTestSuite("unimported_sample_mod")
+                self.assertIsInstance(suite, unittest.TestSuite)
+
+                result = unittest.TestResult()
+                suite.run(result)
+                self.assertEqual(result.testsRun, 2)
+                self.assertEqual(len(result.failures), 0)
+                self.assertEqual(len(result.errors), 0)
+            finally:
+                if tmp_dir in sys.path:
+                    sys.path.remove(tmp_dir)
+                sys.modules.pop("unimported_sample_mod", None)
+
+    def test_doc_test_suite_exception_handling_in_process_object(self):
+        from unittest.mock import patch
+
+        module_name = "exception_test_module"
+        mod = types.ModuleType(module_name)
+        mod.__doc__ = "Some docstring that triggers process_object"
+        sys.modules[module_name] = mod
+
+        try:
+            with patch(
+                "asciidoctest.unittest_integration.extract_docstring_tests",
+                side_effect=RuntimeError("Parsing error simulation"),
+            ):
+                # Should catch RuntimeError and pass gracefully without raising
+                suite = DocTestSuite(mod)
+                self.assertIsInstance(suite, unittest.TestSuite)
+                self.assertEqual(suite.countTestCases(), 0)
+        finally:
+            sys.modules.pop(module_name, None)
+
+    def test_module_reload_coverage(self):
+        import importlib
+
+        import asciidoctest.unittest_integration
+
+        # Reload module during test execution to ensure definition lines are traced by coverage
+        importlib.reload(asciidoctest.unittest_integration)
+

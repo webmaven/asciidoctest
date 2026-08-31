@@ -77,6 +77,11 @@ class AsciiDocItem(pytest.Item):
     def __init__(self, name: str, parent: pytest.Collector, blocks: list[Any]) -> None:
         super().__init__(name, parent)
         self.blocks = blocks
+        self._fixtureinfo = getattr(self.session, "_fixturemanager", None)
+        if self._fixtureinfo is not None:
+            self._fixtureinfo = self.session._fixturemanager.getfixtureinfo(
+                node=self, func=None, cls=None
+            )
 
     def runtest(self) -> None:
         shared_globals: dict[str, Any] = {}
@@ -130,6 +135,11 @@ class DocstringTestItem(pytest.Item):
         super().__init__(name, parent)
         self.lineno = lineno
         self.blocks = blocks
+        self._fixtureinfo = getattr(self.session, "_fixturemanager", None)
+        if self._fixtureinfo is not None:
+            self._fixtureinfo = self.session._fixturemanager.getfixtureinfo(
+                node=self, func=None, cls=None
+            )
 
     def runtest(self) -> None:
         # Dynamically load the containing module
