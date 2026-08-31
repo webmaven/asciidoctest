@@ -1,3 +1,4 @@
+import importlib
 import importlib.util
 import inspect
 import os
@@ -30,12 +31,17 @@ def extract_and_run_docstring_tests(
     if isinstance(source_path_or_module, str) and not os.path.exists(
         source_path_or_module
     ):
-        if source_path_or_module in sys.modules:
-            mod = sys.modules[source_path_or_module]
-        else:
-            mod = __import__(source_path_or_module, globals(), locals(), ["*"])
-        _run_tests_on_module(mod, mode=mode, stats=stats)
-        return stats
+        try:
+            if source_path_or_module in sys.modules:
+                mod = sys.modules[source_path_or_module]
+            else:
+                mod = importlib.import_module(source_path_or_module)
+            _run_tests_on_module(mod, mode=mode, stats=stats)
+            return stats
+        except (ImportError, ModuleNotFoundError, ValueError, AttributeError) as e:
+            raise ValueError(
+                f"Invalid source path or module: {source_path_or_module}"
+            ) from e
 
     if isinstance(source_path_or_module, (str, pathlib.Path)):
         path = pathlib.Path(source_path_or_module).resolve()
@@ -90,7 +96,7 @@ def _run_tests_on_py_file(path: pathlib.Path, mode: str, stats: dict[str, Any]) 
 def _run_tests_on_module(
     mod: types.ModuleType, mode: str, stats: dict[str, Any]
 ) -> None:
-    discovered = set()
+    discovered: set[int] = set()
 
     def process_object(name: str, obj: Any) -> None:
         if id(obj) in discovered:
@@ -111,14 +117,19 @@ def _run_tests_on_module(
 
     process_object(mod.__name__, mod)
 
+    def walk_class(cls: type, prefix: str) -> None:
+        process_object(prefix, cls)
+        for sub_name, sub_member in inspect.getmembers(cls):
+            if inspect.isclass(sub_member):
+                if getattr(sub_member, "__module__", None) == mod.__name__:
+                    walk_class(sub_member, f"{prefix}.{sub_name}")
+            elif inspect.isroutine(sub_member):
+                process_object(f"{prefix}.{sub_name}", sub_member)
+
     for attr_name, member in inspect.getmembers(mod):
         if hasattr(member, "__module__") and member.__module__ != mod.__name__:
             continue
         if inspect.isclass(member):
-            process_object(f"{mod.__name__}.{attr_name}", member)
-            for sub_name, sub_member in inspect.getmembers(
-                member, predicate=inspect.isroutine
-            ):
-                process_object(f"{mod.__name__}.{attr_name}.{sub_name}", sub_member)
+            walk_class(member, f"{mod.__name__}.{attr_name}")
         elif inspect.isroutine(member):
             process_object(f"{mod.__name__}.{attr_name}", member)

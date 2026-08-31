@@ -141,3 +141,35 @@ def test_python_docstring_collection_with_whitespace_spacing(pytester):
     pytester.makepyfile(module_ws=py_content)
     result = pytester.runpytest("-v")
     result.assert_outcomes(passed=1, failed=0)
+
+
+def test_item_fixtureinfo_initialized(pytester):
+    adoc_content = textwrap.dedent("""\
+        = Sample Adoc
+        [source,python,test]
+        ----
+        x = 1
+        assert x == 1
+        ----
+        """)
+    pytester.makefile(".adoc", sample=adoc_content)
+    pytester.makepyfile(
+        sample_mod="""\
+        def fn():
+            '''
+            [source,python,test]
+            ----
+            >>> 1 + 1
+            2
+            ----
+            '''
+            pass
+        """
+    )
+    items, hook_recorder = pytester.inline_genitems()
+    assert len(items) == 2
+    for item in items:
+        assert hasattr(item, "_fixtureinfo")
+        assert item._fixtureinfo is not None
+        assert hasattr(item._fixtureinfo, "argnames")
+        assert isinstance(item._fixtureinfo.argnames, tuple)
