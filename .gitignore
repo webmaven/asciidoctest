@@ -28,3 +28,6 @@ egg-info/
 
 # Sphinx build output
 docs/_build/
+
+# Local superpowers development artifacts
+docs/superpowers/
