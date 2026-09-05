@@ -77,18 +77,16 @@ class AsciiDocFile(pytest.File):
         try:
             blocks = parse_adoc_tests(content, mode=mode)
             if blocks:
-                split_sections = (
-                    self.config.getoption("--asciidoctest-split-sections")
-                    or self.config.getini("asciidoctest_split_sections")
-                )
+                split_sections = self.config.getoption(
+                    "--asciidoctest-split-sections"
+                ) or self.config.getini("asciidoctest_split_sections")
                 if split_sections:
                     for idx, block in enumerate(blocks, start=1):
                         sec_title = block.attributes.get(
                             "__section_title__", "Document"
                         )
                         safe_title = (
-                            re.sub(r"[^\w\-]+", "_", sec_title).strip("_")
-                            or "Section"
+                            re.sub(r"[^\w\-]+", "_", sec_title).strip("_") or "Section"
                         )
                         item_name = f"{safe_title}::asciidoctest_block_{idx}"
                         yield AsciiDocItem.from_parent(
