@@ -173,3 +173,16 @@ def test_item_fixtureinfo_initialized(pytester):
         assert item._fixtureinfo is not None
         assert hasattr(item._fixtureinfo, "argnames")
         assert isinstance(item._fixtureinfo.argnames, tuple)
+
+
+def test_pytest_runs_without_config_warnings(pytester):
+    adoc_content = textwrap.dedent("""\
+        = Clean Config Check
+        [source,python,test]
+        ----
+        assert 1 == 1
+        ----
+        """)
+    pytester.makefile(".adoc", sample=adoc_content)
+    result = pytester.runpytest("-W", "error::pytest.PytestConfigWarning")
+    result.assert_outcomes(passed=1, failed=0)
