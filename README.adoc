@@ -87,14 +87,17 @@ You can configure collection behavior in your `pyproject.toml` or `pytest.ini`:
 ----
 [pytest]
 asciidoctest_mode = eager
+asciidoctest_split_sections = true
 ----
 
-Alternatively, you can supply the `--asciidoctest-mode` flag:
+Alternatively, you can supply command-line flags:
 
 [source,bash]
 ----
-pytest --asciidoctest-mode=eager
+pytest --asciidoctest-mode=eager --asciidoctest-split-sections
 ----
+
+When `--asciidoctest-split-sections` is enabled, AsciiDoctest collects each test block as an individual pytest item named after its section title and 1-based block index (for example, `README.adoc::Getting_Started::asciidoctest_block_1`), enabling targeted execution via `pytest -k <Pattern>`.
 
 == Unittest Integration
 
@@ -131,6 +134,31 @@ stats = extract_and_run_docstring_tests("src/mypackage/")
 import mypackage
 stats = extract_and_run_docstring_tests(mypackage)
 ----
+
+== Testing in Pyodide & WebAssembly
+
+AsciiDoctest and its core dependencies are pure Python and can run in WebAssembly environments like link:https://pyodide.org/[Pyodide].
+
+=== Coexistence with `pytest-pyodide`
+
+AsciiDoctest test items (`AsciiDocItem` and `DocstringTestItem`) initialize `_fixtureinfo` for compatibility with `pytest-pyodide`. You can install both plugins in the same pytest test environment without runner crashes or attribute errors.
+
+=== Testing Strategies for Pyodide Packages
+
+When documenting and testing frontend or browser-focused Python packages intended for Pyodide:
+
+1. **Pure Pyodide / In-Wasm Execution**: Install `asciidoctest` into the Pyodide runtime (via `micropip.install("asciidoctest")`) and execute tests directly inside Node.js or browser Pyodide using `DocFileSuite`, `DocTestSuite`, or `extract_and_run_docstring_tests`.
+2. **Host Pytest Wrapper Bridge**: When orchestrating browser tests from host pytest using `pytest-pyodide` (`@pytest.mark.driver`), parse document blocks on the host using `asciidoctest.parser.parse_adoc_tests(content)` and dispatch block contents into the browser VM using driver helpers such as `selenium.run_python(block.content)`.
+3. **Dual-Target Fast Feedback**: Use lightweight mocks for browser globals (`js`, `pyodide.ffi`) during host `pytest` runs for instant local validation, paired with browser integration runs in CI.
+
+=== State Management (`shared` & `reset`) in Pyodide
+
+Frontend and browser-based Python applications are naturally stateful. AsciiDoctest's execution markers map directly to WebAssembly workflows:
+
+* **Stateful Tutorials (`[source,python,shared]`)**: Re-initializing WebAssembly modules, opening IndexedDB handles, or creating canvas contexts on every 2-line snippet is prohibitively slow. Using `shared` lets you build realistic, multi-step browser tutorials where connection objects and state carry sequentially from block to block.
+* **Parallel Named Scopes (`shared="<name>"`)**: Isolate distinct browser components or concurrent workers in the same document without collision.
+* **Explicit & Section Boundaries (`reset` and `== Section`)**: When transitioning between tutorial chapters or independent widgets, use `[source,python,reset]` or top-level section headings to clear Python shared state.
+* **Python State vs. DOM Teardown**: Note that while `reset` and `== Section` automatically clear Python's internal namespace dictionaries, host JavaScript artifacts (such as DOM nodes attached to `document.body` or event listeners added to `window`) persist in the browser engine unless explicitly removed in Python code or test fixtures.
 
 == Examples
 

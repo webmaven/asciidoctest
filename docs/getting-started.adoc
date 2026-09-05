@@ -38,14 +38,17 @@ Configure collection options in `pyproject.toml` or `pytest.ini`:
 ----
 [pytest]
 asciidoctest_mode = eager
+asciidoctest_split_sections = true
 ----
 
-Or specify the flag on the command line:
+Or specify flags on the command line:
 
 [source,bash]
 ----
-pytest --asciidoctest-mode=eager
+pytest --asciidoctest-mode=eager --asciidoctest-split-sections
 ----
+
+The `--asciidoctest-split-sections` option splits document test collection into individual pytest items per test block, formatted as `<Section_Title>::asciidoctest_block_<N>`, allowing targeted test selection with `pytest -k <Pattern>`.
 
 == Unittest Integration
 
@@ -62,6 +65,29 @@ def suite():
 if __name__ == "__main__":
     unittest.main(defaultTest="suite")
 ----
+
+== Testing in Pyodide & WebAssembly
+
+AsciiDoctest is pure Python and fully compatible with link:https://pyodide.org/[Pyodide] environments.
+
+=== Coexistence with `pytest-pyodide`
+
+AsciiDoctest initializes `_fixtureinfo` on its test items (`AsciiDocItem` and `DocstringTestItem`), allowing it to coexist cleanly with `pytest-pyodide` without fixture inspection errors.
+
+=== Strategies for Pyodide Frontend Libraries
+
+1. **In-Wasm Direct Test Runners**: Install `asciidoctest` into Pyodide via `micropip` and run tests directly in the Pyodide WebAssembly environment using `DocFileSuite`, `DocTestSuite`, or `extract_and_run_docstring_tests`.
+2. **Host Pytest Bridge**: In host test suites using `pytest-pyodide`, extract doctest blocks using `asciidoctest.parser.parse_adoc_tests` and dispatch them into the browser VM using the driver (e.g., `selenium.run_python`).
+3. **Mocked Host Verification**: For high test velocity, mock browser DOM and `js` globals during local `pytest` runs, reserving full in-browser Pyodide runs for CI integration stages.
+
+=== State Management (`shared` & `reset`) in Pyodide
+
+Frontend and browser-based Python applications are naturally stateful. AsciiDoctest's execution markers map directly to WebAssembly workflows:
+
+* **Stateful Tutorials (`[source,python,shared]`)**: Re-initializing WebAssembly modules, opening IndexedDB handles, or creating canvas contexts on every 2-line snippet is prohibitively slow. Using `shared` lets you build realistic, multi-step browser tutorials where connection objects and state carry sequentially from block to block.
+* **Parallel Named Scopes (`shared="<name>"`)**: Isolate distinct browser components or concurrent workers in the same document without collision.
+* **Explicit & Section Boundaries (`reset` and `== Section`)**: When transitioning between tutorial chapters or independent widgets, use `[source,python,reset]` or top-level section headings to clear Python shared state.
+* **Python State vs. DOM Teardown**: Note that while `reset` and `== Section` automatically clear Python's internal namespace dictionaries, host JavaScript artifacts (such as DOM nodes attached to `document.body` or event listeners added to `window`) persist in the browser engine unless explicitly removed in Python code or test fixtures.
 
 == State Models Quick Reference
 

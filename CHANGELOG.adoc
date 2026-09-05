@@ -3,6 +3,32 @@
 
 This document lists all notable changes and releases for `asciidoctest`.
 
+== link:https://pypi.org/project/asciidoctest/0.2.0a5/[0.2.0a5] - 2026-09-05
+
+=== Added
+* **Granular Pytest Node IDs per Section or Block (Issue #12)**:
+  - Added `--asciidoctest-split-sections` command-line flag and `asciidoctest_split_sections` ini configuration option to split AsciiDoc document test collection into individual pytest items per test block.
+  - Test items are named after their section title and 1-based block index (`<Section_Title>::asciidoctest_block_<N>`), enabling targeted execution and filtering via `pytest -k <Pattern>`.
+  - Updated `AsciiDocItem.reportinfo()` to report exact 1-based source line numbers for individual test blocks when section splitting is enabled.
+* **Pyodide & WebAssembly Testing Guidance**:
+  - Added architectural documentation in `README.adoc` and `docs/getting-started.adoc` for testing frontend and browser-focused libraries in Pyodide/WebAssembly.
+  - Documented testing strategies: in-Wasm direct execution via `micropip` (`DocFileSuite`, `DocTestSuite`, `extract_and_run_docstring_tests`), host `pytest-pyodide` driver bridges, and dual-target mock workflows.
+  - Detailed state lifecycle management in WebAssembly, including sequential persistent state (`shared`), parallel named scopes (`shared="<name>"`), boundary resets (`reset` and `== Section`), and the distinction between Python namespace cleanup and host browser DOM teardown.
+
+=== Fixed
+* **Pytest Runner Configuration Warnings**:
+  - Removed unrecognized `asyncio_default_fixture_loop_scope` setting from `pyproject.toml` and test fixtures, eliminating `PytestConfigWarning` during test execution.
+
+=== Changed
+* **Upgraded Dependencies**:
+  - Upgraded `asciidoctrine` dependency constraint to `>=0.2.0a7` (incorporating support for hanging list item continuations, backslash-escaped delimiters, and dot-ordered list items preceding source blocks).
+  - Upgraded `asciidocstring` dependency constraint to `>=0.1.0a9`.
+* **Upstream Compatibility & Test Coverage**:
+  - Added upstream compatibility regression suite in `tests/test_asciidoctrine_020a7_compat.py` covering list continuations, escaped delimiters/macros, and ordered lists.
+  - Added unit and integration tests for section splitting in `tests/test_section_node_ids.py` and `tests/test_plugin_coverage.py`, expanding the test suite to 121 passing tests with zero warnings.
+
+---
+
 == link:https://pypi.org/project/asciidoctest/0.2.0a4/[0.2.0a4] - 2026-08-31
 
 === Added
