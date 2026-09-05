@@ -26,10 +26,22 @@ def pytest_addoption(parser: pytest.Parser) -> None:
         choices=["explicit", "eager"],
         help="asciidoctest target selection mode: 'explicit' or 'eager'",
     )
+    group.addoption(
+        "--asciidoctest-split-sections",
+        action="store_true",
+        default=False,
+        help="Split AsciiDoc document test collection into per-section/block items",
+    )
     parser.addini(
         "asciidoctest_mode",
         default="explicit",
         help="asciidoctest target selection mode: 'explicit' or 'eager'",
+    )
+    parser.addini(
+        "asciidoctest_split_sections",
+        type="bool",
+        default=False,
+        help="Split AsciiDoc document test collection into per-section/block items",
     )
 
 
@@ -65,8 +77,27 @@ class AsciiDocFile(pytest.File):
         try:
             blocks = parse_adoc_tests(content, mode=mode)
             if blocks:
-                # All blocks inside a single file share sequential state, run as one item
-                yield AsciiDocItem.from_parent(self, name="asciidoctest", blocks=blocks)
+                split_sections = (
+                    self.config.getoption("--asciidoctest-split-sections")
+                    or self.config.getini("asciidoctest_split_sections")
+                )
+                if split_sections:
+                    for idx, block in enumerate(blocks, start=1):
+                        sec_title = block.attributes.get(
+                            "__section_title__", "Document"
+                        )
+                        safe_title = (
+                            re.sub(r"[^\w\-]+", "_", sec_title).strip("_")
+                            or "Section"
+                        )
+                        item_name = f"{safe_title}::asciidoctest_block_{idx}"
+                        yield AsciiDocItem.from_parent(
+                            self, name=item_name, blocks=[block]
+                        )
+                else:
+                    yield AsciiDocItem.from_parent(
+                        self, name="asciidoctest", blocks=blocks
+                    )
         except Exception as e:
             raise ValueError(f"Failed to parse AsciiDoc file {self.path}: {e}") from e
 
@@ -97,7 +128,10 @@ class AsciiDocItem(pytest.Item):
         return super().repr_failure(excinfo, style=style)
 
     def reportinfo(self) -> tuple[pathlib.Path | str, int | None, str]:
-        return self.path, 0, f"AsciiDoc Document: {self.name}"
+        lineno = (
+            getattr(self.blocks[0], "line_number", 0) if len(self.blocks) == 1 else 0
+        )
+        return self.path, lineno, f"AsciiDoc Document: {self.name}"
 
 
 class PythonDocstringFile(pytest.File):

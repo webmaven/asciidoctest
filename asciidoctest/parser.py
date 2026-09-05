@@ -18,10 +18,21 @@ class SafeTestBlockExtractorVisitor(TestBlockExtractorVisitor):
         super().__init__(target_language, requires_test_marker)
         self._current_section_id = 0
         self._section_counter = 0
+        self._current_section_title: str | None = None
+
+    def _get_title_text(self, node: Any) -> str:
+        title_node = getattr(node, "title", None)
+        if title_node is None:
+            return ""
+        if isinstance(title_node, str):
+            return title_node.strip()
+        inlines = getattr(title_node, "inlines", [])
+        return "".join(getattr(i, "value", str(i)) for i in inlines).strip()
 
     def extract(self, node: Any) -> list[TestBlock]:
         self._current_section_id = 0
         self._section_counter = 0
+        self._current_section_title = None
         return super().extract(node)
 
     def visit(self, node: Any, **kwargs: Any) -> Any:
@@ -34,8 +45,14 @@ class SafeTestBlockExtractorVisitor(TestBlockExtractorVisitor):
                 self._section_counter += 1
                 prev_section_id = self._current_section_id
                 self._current_section_id = self._section_counter
+                title_text = self._get_title_text(node)
+                prev_title = self._current_section_title
+                self._current_section_title = (
+                    title_text or f"section_{self._section_counter}"
+                )
                 result = super().visit(node, **kwargs)
                 self._current_section_id = prev_section_id
+                self._current_section_title = prev_title
                 return result
 
         return super().visit(node, **kwargs)
@@ -44,10 +61,13 @@ class SafeTestBlockExtractorVisitor(TestBlockExtractorVisitor):
         count_before = len(self.extracted_tests)
         super().visit_listing(node)
         if len(self.extracted_tests) > count_before:
-            block = self.extracted_tests[-1]
-            if getattr(block, "attributes", None) is None:
-                block.attributes = {}
-            block.attributes["__section_id__"] = self._current_section_id
+            for block in self.extracted_tests[count_before:]:
+                if getattr(block, "attributes", None) is None:
+                    block.attributes = {}
+                block.attributes["__section_id__"] = self._current_section_id
+                block.attributes["__section_title__"] = (
+                    self._current_section_title or "Document"
+                )
 
 
 def block_has_test_marker(block: Any) -> bool:

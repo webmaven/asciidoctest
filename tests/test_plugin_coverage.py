@@ -2,7 +2,7 @@ import pathlib
 import textwrap
 from types import SimpleNamespace
 from typing import Any
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock, call, patch
 
 import pytest
 from _pytest._code.code import ExceptionInfo
@@ -45,17 +45,21 @@ def test_pytest_addoption_with_real_parser() -> None:
     pytest_addoption(parser)
 
     # The option is added to the named "asciidoctest" group, not _anonymous.
-    # Collect options from all groups to find --asciidoctest-mode.
+    # Collect options from all groups to find registered CLI options.
     all_option_names: list[tuple[str, ...]] = []
     for group in parser._groups:
         all_option_names.extend(opt.names() for opt in group.options)
     all_option_names.extend(opt.names() for opt in parser._anonymous.options)
     assert any("--asciidoctest-mode" in names for names in all_option_names)
+    assert any("--asciidoctest-split-sections" in names for names in all_option_names)
 
-    # Verify ini option is registered with default 'explicit'
+    # Verify ini options are registered with expected defaults
     # _inidict stores (help, type, default) tuples
     assert "asciidoctest_mode" in parser._inidict
     assert parser._inidict["asciidoctest_mode"][2] == "explicit"
+    assert "asciidoctest_split_sections" in parser._inidict
+    assert parser._inidict["asciidoctest_split_sections"][1] == "bool"
+    assert parser._inidict["asciidoctest_split_sections"][2] is False
 
 
 def test_pytest_addoption_with_dummy_parser() -> None:
@@ -67,17 +71,39 @@ def test_pytest_addoption_with_dummy_parser() -> None:
     pytest_addoption(dummy_parser)
 
     dummy_parser.getgroup.assert_called_once_with("asciidoctest")
-    dummy_group.addoption.assert_called_once_with(
-        "--asciidoctest-mode",
-        action="store",
-        default="explicit",
-        choices=["explicit", "eager"],
-        help="asciidoctest target selection mode: 'explicit' or 'eager'",
+    dummy_group.addoption.assert_has_calls(
+        [
+            call(
+                "--asciidoctest-mode",
+                action="store",
+                default="explicit",
+                choices=["explicit", "eager"],
+                help="asciidoctest target selection mode: 'explicit' or 'eager'",
+            ),
+            call(
+                "--asciidoctest-split-sections",
+                action="store_true",
+                default=False,
+                help="Split AsciiDoc document test collection into per-section/block items",
+            ),
+        ],
+        any_order=False,
     )
-    dummy_parser.addini.assert_called_once_with(
-        "asciidoctest_mode",
-        default="explicit",
-        help="asciidoctest target selection mode: 'explicit' or 'eager'",
+    dummy_parser.addini.assert_has_calls(
+        [
+            call(
+                "asciidoctest_mode",
+                default="explicit",
+                help="asciidoctest target selection mode: 'explicit' or 'eager'",
+            ),
+            call(
+                "asciidoctest_split_sections",
+                type="bool",
+                default=False,
+                help="Split AsciiDoc document test collection into per-section/block items",
+            ),
+        ],
+        any_order=False,
     )
 
 
@@ -173,12 +199,30 @@ def test_pytest_collect_file_unreadable_file(request: pytest.FixtureRequest) -> 
 
 
 def _create_mock_config(
-    option_mode: str | None = None, ini_mode: str | None = None
+    option_mode: str | None = None,
+    ini_mode: str | None = None,
+    split_sections_option: bool = False,
+    split_sections_ini: bool = False,
 ) -> MagicMock:
     """Create a mock pytest config with getoption and getini."""
     config = MagicMock()
-    config.getoption.return_value = option_mode
-    config.getini.return_value = ini_mode
+
+    def mock_getoption(name: str, default: Any = None) -> Any:
+        if name == "--asciidoctest-mode":
+            return option_mode
+        if name == "--asciidoctest-split-sections":
+            return split_sections_option
+        return default
+
+    def mock_getini(name: str) -> Any:
+        if name == "asciidoctest_mode":
+            return ini_mode
+        if name == "asciidoctest_split_sections":
+            return split_sections_ini
+        return None
+
+    config.getoption.side_effect = mock_getoption
+    config.getini.side_effect = mock_getini
     return config
 
 
@@ -307,6 +351,99 @@ def test_asciidoc_file_collect_parse_failure(
             list(collector.collect())
 
 
+def test_asciidoc_file_collect_split_sections_cli_flag(
+    tmp_path: pathlib.Path, request: pytest.FixtureRequest
+) -> None:
+    """AsciiDocFile.collect yields separate items when split_sections is enabled via CLI."""
+    adoc = tmp_path / "sections.adoc"
+    adoc.write_text(
+        textwrap.dedent("""\
+        = Title
+
+        == Intro Section
+        [source,python,test]
+        ----
+        a = 1
+        ----
+
+        == Conclusion Section
+        [source,python,test]
+        ----
+        b = 2
+        ----
+        """),
+        encoding="utf-8",
+    )
+
+    collector = AsciiDocFile.from_parent(request.session, path=adoc)
+    collector.config = _create_mock_config(
+        option_mode="explicit", split_sections_option=True
+    )
+
+    items = list(collector.collect())
+    assert len(items) == 2
+    assert items[0].name == "Intro_Section::asciidoctest_block_1"
+    assert len(items[0].blocks) == 1
+    assert items[1].name == "Conclusion_Section::asciidoctest_block_2"
+    assert len(items[1].blocks) == 1
+
+
+def test_asciidoc_file_collect_split_sections_ini_config(
+    tmp_path: pathlib.Path, request: pytest.FixtureRequest
+) -> None:
+    """AsciiDocFile.collect yields separate items when split_sections is enabled via ini."""
+    adoc = tmp_path / "ini_sections.adoc"
+    adoc.write_text(
+        textwrap.dedent("""\
+        = Title
+
+        == Setup
+        [source,python,test]
+        ----
+        x = 10
+        ----
+        """),
+        encoding="utf-8",
+    )
+
+    collector = AsciiDocFile.from_parent(request.session, path=adoc)
+    collector.config = _create_mock_config(
+        option_mode="explicit", split_sections_ini=True
+    )
+
+    items = list(collector.collect())
+    assert len(items) == 1
+    assert items[0].name == "Setup::asciidoctest_block_1"
+
+
+def test_asciidoc_file_collect_split_sections_sanitization(
+    tmp_path: pathlib.Path, request: pytest.FixtureRequest
+) -> None:
+    """AsciiDocFile.collect sanitizes special characters in section titles."""
+    adoc = tmp_path / "special.adoc"
+    adoc.write_text(
+        textwrap.dedent("""\
+        = Title
+
+        == Special! @#$ Characters & More
+        [source,python,test]
+        ----
+        x = 1
+        ----
+        """),
+        encoding="utf-8",
+    )
+
+    collector = AsciiDocFile.from_parent(request.session, path=adoc)
+    collector.config = _create_mock_config(
+        option_mode="explicit", split_sections_option=True
+    )
+
+    items = list(collector.collect())
+    assert len(items) == 1
+    assert items[0].name == "Special_Characters_More::asciidoctest_block_1"
+
+
 # ============================================================================
 # AsciiDocItem Tests
 # ============================================================================
@@ -422,6 +559,24 @@ def test_asciidoc_item_reportinfo(
     assert path == adoc
     assert lineno == 0
     assert name == "AsciiDoc Document: asciidoctest"
+
+
+def test_asciidoc_item_reportinfo_single_block(
+    tmp_path: pathlib.Path, request: pytest.FixtureRequest
+) -> None:
+    """AsciiDocItem.reportinfo returns path, block.line_number, and formatted name when single block."""
+    adoc = tmp_path / "single.adoc"
+    adoc.write_text("= Doc\n", encoding="utf-8")
+    parent_file = AsciiDocFile.from_parent(request.session, path=adoc)
+    block = MockBlock(content="x = 1\n", line_number=42)
+    item = AsciiDocItem.from_parent(
+        parent_file, name="Section::asciidoctest_block_1", blocks=[block]
+    )
+
+    path, lineno, name = item.reportinfo()
+    assert path == adoc
+    assert lineno == 42
+    assert name == "AsciiDoc Document: Section::asciidoctest_block_1"
 
 
 # ============================================================================
