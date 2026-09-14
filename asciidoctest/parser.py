@@ -264,7 +264,7 @@ def find_docstrings_in_py_file(
     try:
         content = p.read_text("utf-8")
         tree = ast.parse(content)
-    except SyntaxError, ValueError, OSError, UnicodeDecodeError:
+    except (SyntaxError, ValueError, OSError, UnicodeDecodeError):
         return []
 
     visitor = _DocstringVisitor()

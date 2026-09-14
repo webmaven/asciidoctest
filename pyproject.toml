@@ -1,13 +1,13 @@
 [build-system]
-requires = ["setuptools>=61.0.0"]
-build-backend = "setuptools.build_meta"
+requires = ["hatchling"]
+build-backend = "hatchling.build"
 
 [project]
 name = "asciidoctest"
 version = "0.2.0a5"
 description = "Verifiable, stateful, and interactive documentation with AsciiDoc."
 readme = {file = "README.adoc", content-type = "text/plain"}
-requires-python = ">=3.14"
+requires-python = ">=3.10"
 license = {text = "Apache-2.0"}
 authors = [
     {name = "Michael Bernstein", email = "zopemaven@gmail.com"}
@@ -18,8 +18,8 @@ classifiers = [
     "Framework :: Pytest",
 ]
 dependencies = [
-    "asciidoctrine>=0.2.0a7",
-    "asciidocstring>=0.1.0a9",
+    "asciidoctrine>=0.2.0a8",
+    "asciidocstring>=0.1.0a11",
     "lark>=1.3.1",
 ]
 
@@ -36,6 +36,7 @@ test = [
     "pytest-cov>=4.0",
     "ruff>=0.1.0",
     "mypy>=1.0.0",
+    "golem>=0.99b0; python_version < '3.14'",
 ]
 docs = [
     "sphinx>=7.0.0",
@@ -46,9 +47,8 @@ docs = [
 [project.entry-points.pytest11]
 asciidoctest = "asciidoctest.pytest_plugin"
 
-[tool.setuptools.packages.find]
-where = ["."]
-include = ["asciidoctest*"]
+[tool.hatch.build.targets.wheel]
+packages = ["asciidoctest"]
 
 [tool.pytest.ini_options]
 pythonpath = ["."]
@@ -63,9 +63,27 @@ omit = ["tests/*"]
 
 [tool.coverage.report]
 show_missing = true
+fail_under = 97
+
+[tool.mypy]
+strict = true
+python_version = "3.10"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = true
+
+[tool.hatch.envs.default.scripts]
+test = "coverage run -m pytest {args}"
+cov-report = "coverage report -m"
+lint = "ruff check {args:.}"
+format = "ruff format --check {args:.}"
+format-fix = "ruff format {args:.}"
+typecheck = "mypy asciidoctest {args}"
+docs-build = "sphinx-build -b html docs/ docs/_build/html"
+docs-serve = "python -m http.server --directory docs/_build/html"
 
 [tool.ruff]
-target-version = "py314"
+target-version = "py310"
 line-length = 88
 
 [tool.ruff.lint]
