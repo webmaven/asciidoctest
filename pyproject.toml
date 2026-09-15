@@ -72,6 +72,9 @@ warn_return_any = true
 warn_unused_configs = true
 disallow_untyped_defs = true
 
+[tool.hatch.envs.default]
+installer = "uv"
+
 [tool.hatch.envs.default.scripts]
 test = "coverage run -m pytest {args}"
 cov-report = "coverage report -m"
