@@ -260,5 +260,9 @@ def test_package_exports():
         "AsciiDocTestFailure",
         "DocFileSuite",
         "DocTestSuite",
+        "run_adoc_tests",
         "extract_and_run_docstring_tests",
+        "test_docstrings",
+        "TestSuiteResult",
+        "TestFailureDetail",
     }

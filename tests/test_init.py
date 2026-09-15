@@ -27,7 +27,11 @@ def test_all_attribute_contents() -> None:
         "AsciiDocTestFailure",
         "DocFileSuite",
         "DocTestSuite",
+        "run_adoc_tests",
         "extract_and_run_docstring_tests",
+        "test_docstrings",
+        "TestSuiteResult",
+        "TestFailureDetail",
     ]
     assert hasattr(asciidoctest, "__all__")
     assert isinstance(asciidoctest.__all__, list)

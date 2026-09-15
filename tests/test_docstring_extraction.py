@@ -467,14 +467,14 @@ def test_extract_and_run_docstring_tests_empty_docstrings(tmp_path: pathlib.Path
         encoding="utf-8",
     )
     results = extract_and_run_docstring_tests(py_file, mode="explicit")
-    assert results == {"total": 0, "passed": 0, "failed": 0}
+    assert results == {"total": 0, "passed": 0, "failed": 0, "failures": []}
 
 
 def test_extract_and_run_docstring_tests_syntax_error_file(tmp_path: pathlib.Path):
     py_file = tmp_path / "bad_syntax.py"
     py_file.write_text("def broken_syntax(:\n    pass\n", encoding="utf-8")
     results = extract_and_run_docstring_tests(py_file, mode="explicit")
-    assert results == {"total": 0, "passed": 0, "failed": 0}
+    assert results == {"total": 0, "passed": 0, "failed": 0, "failures": []}
 
 
 def test_extract_and_run_docstring_tests_eager_mode(tmp_path: pathlib.Path):

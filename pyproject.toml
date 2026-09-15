@@ -56,6 +56,10 @@ testpaths = [
     "tests",
     "README.adoc",
 ]
+filterwarnings = [
+    "ignore:cannot collect test class 'TestFailureDetail':pytest.PytestCollectionWarning",
+    "ignore:cannot collect test class 'TestSuiteResult':pytest.PytestCollectionWarning",
+]
 
 [tool.coverage.run]
 source = ["asciidoctest"]
