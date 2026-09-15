@@ -36,11 +36,11 @@ test = [
     "pytest-cov>=4.0",
     "ruff>=0.1.0",
     "mypy>=1.0.0",
-    "golem>=0.99b0; python_version < '3.14'",
+    "golem-docs>=0.1.0a1; python_version >= '3.14'",
 ]
 docs = [
     "sphinx>=7.0.0",
-    "sphinx-asciidoctrine>=0.1.0a1",
+    "sphinx-asciidoctrine>=0.1.0a1; python_version >= '3.14'",
     "sphinx-rtd-theme>=2.0.0",
 ]
 
