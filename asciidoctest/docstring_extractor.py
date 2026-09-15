@@ -203,12 +203,9 @@ def _run_tests_on_py_file(
 
     # Use a unique, path-derived name to avoid sys.modules collisions between
     # same-named files in different subdirectories (Issue #8).
-    module_name = (
-        "_asciidoctest_"
-        + "_".join(path.with_suffix("").parts)
-        .replace("-", "_")
-        .replace(".", "_")
-    )
+    module_name = "_asciidoctest_" + "_".join(path.with_suffix("").parts).replace(
+        "-", "_"
+    ).replace(".", "_")
     spec = importlib.util.spec_from_file_location(module_name, path)
     if spec is None or spec.loader is None:
         return

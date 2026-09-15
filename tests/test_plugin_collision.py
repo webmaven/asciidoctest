@@ -13,11 +13,9 @@ These tests verify:
 3. Multiple files with the same stem can run without colliding.
 """
 
-import importlib.util
 import sys
 import textwrap
 from pathlib import Path
-
 
 # ---------------------------------------------------------------------------
 # Direct unit tests on DocstringTestItem.runtest() internals
@@ -26,7 +24,6 @@ from pathlib import Path
 
 def _make_mock_item(tmp_path: Path, rel_subpath: str, content: str) -> object:
     """Create a minimal DocstringTestItem-like object for testing runtest()."""
-    import pytest
 
     from asciidoctest.parser import extract_docstring_tests
     from asciidoctest.pytest_plugin import DocstringTestItem
@@ -55,7 +52,6 @@ def _make_mock_item(tmp_path: Path, rel_subpath: str, content: str) -> object:
 
     # Parse the docstring directly from the written file
     import ast
-    import inspect
 
     tree = ast.parse(content)
     docstring: str | None = None

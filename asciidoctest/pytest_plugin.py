@@ -180,12 +180,9 @@ class DocstringTestItem(pytest.Item):
             rel = self.path.relative_to(self.config.rootpath)
         except ValueError:
             rel = self.path
-        module_name = (
-            "_asciidoctest_"
-            + "_".join(rel.with_suffix("").parts)
-            .replace("-", "_")
-            .replace(".", "_")
-        )
+        module_name = "_asciidoctest_" + "_".join(rel.with_suffix("").parts).replace(
+            "-", "_"
+        ).replace(".", "_")
         spec = importlib.util.spec_from_file_location(module_name, self.path)
         if spec is None or spec.loader is None:
             raise ImportError(f"Could not load spec for {self.path}")

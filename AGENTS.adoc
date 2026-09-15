@@ -43,16 +43,43 @@ The test suite is structured to achieve maximum coverage and prevent regressions
 * **`tests/test_runner.py`**: Validates the sequential runner, state-sharing across interactive/non-interactive blocks, and standard exception propagation.
 * **`tests/test_plugin.py`**: Basic pytest collection and integration tests.
 * **`tests/test_plugin_coverage.py`**: Advanced pytest integration tests utilizing the `pytester` fixture to test error boundaries (unparseable AsciiDoc collection, syntax errors in python files, imported objects filter, and repr-failure fallbacks).
+* **`tests/test_plugin_collision.py`**: Regression tests for module name collision when two files share the same stem in different directories (Issue #8).
 * **`tests/test_unittest_integration.py`**: Validates standard library `unittest` adapters, nested routines, duplicate discoveries, and class formatting.
+* **`tests/test_api.py`**: Unit tests for `run_adoc_tests`, `extract_and_run_docstring_tests`, `fail_fast` behavior, and `TestSuiteResult` / `TestFailureDetail` TypedDicts (Issues #4, #20).
 * **`tests/test_footnotes.py`**: Verifies compatibility with the latest footnote macros (`footnote:[...]`, `footnoteref:[...]`) introduced in `asciidoctrine>=0.1.0a7`.
+* **`tests/integration/test_golem_integration.py`**: Golem-style integration tests exercising the programmatic API end-to-end — shared contexts, `setup_globs`, fail-fast, and module collision isolation (Issue #21).
 
 === Coverage Validation
-To get a full and accurate coverage report including pytest startup plugin registration, execute the test suite directly via `coverage`:
+To get a full and accurate coverage report including pytest startup plugin registration, use Hatch:
+
+[source,bash]
+----
+hatch run test
+hatch run coverage
+----
+
+Or directly via coverage (if not using Hatch):
 
 [source,bash]
 ----
 .venv/bin/coverage run -m pytest
 .venv/bin/coverage report -m
+----
+
+== Code Quality and Style
+
+Run quality checks using Hatch scripts (uv is used automatically under the hood):
+
+[source,bash]
+----
+# Format code
+hatch run format
+
+# Lint code
+hatch run lint
+
+# Strict type checking (mypy --strict, zero errors required)
+hatch run typecheck
 ----
 
 ---
@@ -63,38 +90,41 @@ Always run through this checklist completely before tagging or uploading a new p
 
 === 1. Dependency Audit
 * [ ] Verify that constraints in `pyproject.toml` are correctly aligned with the latest stable dependency releases.
-* [ ] Ensure `asciidocstring` points to stable pre-release/release versions (e.g. `>=0.1.0a2`), avoiding premature or yanked releases.
+* [ ] Ensure `asciidocstring` points to stable pre-release/release versions (e.g. `>=0.1.0a11`), avoiding premature or yanked releases.
 
 === 2. Code Quality and Style
-* [ ] Format code using standard code style checkers.
-* [ ] Run static type checking (e.g. `mypy`) to ensure type-safety across all modules.
+* [ ] Format code: `hatch run format`
+* [ ] Lint code: `hatch run lint`
+* [ ] Run strict type checking: `hatch run typecheck` (must report zero errors)
 
 === 3. Verification Suite
-* [ ] Install the package in editable mode with test dependencies:
+* [ ] Run the complete test suite and coverage gate (≥ 97%):
   [source,bash]
   ----
-  .venv/bin/pip install -e ".[test]"
+  hatch run test
   ----
-* [ ] Run the complete test suite:
+* [ ] Confirm coverage does not drop below 97%:
   [source,bash]
   ----
-  .venv/bin/pytest
-  ----
-* [ ] Measure code coverage and confirm that coverage remains above 95% total:
-  [source,bash]
-  ----
-  .venv/bin/coverage run -m pytest
-  .venv/bin/coverage report
+  hatch run coverage
   ----
 
-=== 4. Documentation Check
+=== 4. Lockfile Check
+* [ ] Verify `pylock.toml` is up to date with current dependencies. Regenerate if needed:
+  [source,bash]
+  ----
+  uv lock --output-file pylock.toml
+  git add pylock.toml
+  ----
+
+=== 5. Documentation Check
 * [ ] Confirm that all examples inside `README.adoc` pass successfully under our self-verifying test suite.
 * [ ] Update `CHANGELOG.adoc` to catalog the latest changes, additions, and fixed bugs under the appropriate release version header.
 
-=== 5. Publishing Preparation
+=== 6. Publishing Preparation
 * [ ] Update the `version` field in `pyproject.toml`.
 * [ ] Run build checks to generate clean source and wheel distributions:
   [source,bash]
   ----
-  .venv/bin/python3 -m build
+  hatch run build
   ----

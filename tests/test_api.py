@@ -8,19 +8,18 @@ import pytest
 
 from asciidoctest import (
     AsciiDocTestFailure,
-    TestFailureDetail,
-    TestSuiteResult,
     extract_and_run_docstring_tests,
     run_adoc_tests,
 )
-
 
 # ---------------------------------------------------------------------------
 # TypedDict structural tests
 # ---------------------------------------------------------------------------
 
 
-def test_test_suite_result_is_typed_dict_with_failures_key(tmp_path: pathlib.Path) -> None:
+def test_test_suite_result_is_typed_dict_with_failures_key(
+    tmp_path: pathlib.Path,
+) -> None:
     """TestSuiteResult always includes a 'failures' list."""
     py = tmp_path / "ok.py"
     py.write_text(
@@ -337,3 +336,92 @@ def test_init_exports_run_adoc_tests() -> None:
         "TestFailureDetail",
     ]:
         assert name in asciidoctest.__all__, f"{name!r} missing from __all__"
+
+
+# ---------------------------------------------------------------------------
+# run_adoc_tests: ModuleType source (lines 124-125 of docstring_extractor.py)
+# ---------------------------------------------------------------------------
+
+
+def test_run_adoc_tests_from_module_type() -> None:
+    """run_adoc_tests accepts a types.ModuleType and routes to _run_tests_on_module."""
+    import types
+
+    mod = types.ModuleType("_test_api_run_adoc_module")
+    mod.__doc__ = textwrap.dedent("""
+        [source,python,test]
+        ----
+        assert 1 == 1
+        ----
+    """)
+    result = run_adoc_tests(mod)
+    assert result["total"] == 1
+    assert result["passed"] == 1
+    assert result["failed"] == 0
+
+
+def test_run_adoc_tests_from_module_type_with_nested_class() -> None:
+    """run_adoc_tests with a module containing a class exercises nested traversal."""
+    import types
+
+    mod = types.ModuleType("_test_api_run_adoc_nested")
+    mod.__name__ = "_test_api_run_adoc_nested"
+
+    # Attach a class with a docstring test to the synthetic module
+    class _Inner:
+        """
+        [source,python,test]
+        ----
+        assert 2 + 2 == 4
+        ----
+        """
+
+    _Inner.__module__ = mod.__name__
+    mod._Inner = _Inner  # type: ignore[attr-defined]
+    result = run_adoc_tests(mod)
+    assert result["total"] >= 1
+    assert result["failed"] == 0
+
+
+def test_run_adoc_tests_from_module_type_fail_fast_false() -> None:
+    """run_adoc_tests with a module and fail_fast=False collects failures."""
+    import types
+
+    mod = types.ModuleType("_test_api_run_adoc_fail_collect")
+    mod.__doc__ = textwrap.dedent("""
+        [source,python,test]
+        ----
+        assert 1 == 2
+        ----
+    """)
+    result = run_adoc_tests(mod, fail_fast=False)
+    assert result["failed"] == 1
+    assert len(result["failures"]) == 1
+
+
+# ---------------------------------------------------------------------------
+# run_adoc_tests: directory source
+# ---------------------------------------------------------------------------
+
+
+def test_run_adoc_tests_from_directory(tmp_path: pathlib.Path) -> None:
+    """run_adoc_tests with a directory recurses into .py files."""
+    sub = tmp_path / "pkg"
+    sub.mkdir()
+    (sub / "__init__.py").write_text("", encoding="utf-8")
+    (sub / "util.py").write_text(
+        textwrap.dedent("""\
+        def helper():
+            \"\"\"
+            [source,python,test]
+            ----
+            assert 3 == 3
+            ----
+            \"\"\"
+            pass
+        """),
+        encoding="utf-8",
+    )
+    result = run_adoc_tests(tmp_path)
+    assert result["total"] >= 1
+    assert result["failed"] == 0

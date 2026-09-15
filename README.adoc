@@ -5,7 +5,7 @@
 
 image:https://github.com/webmaven/asciidoctest/actions/workflows/ci.yml/badge.svg[CI Status, link=https://github.com/webmaven/asciidoctest/actions/workflows/ci.yml]
 image:https://img.shields.io/pypi/v/asciidoctest.svg[PyPI Version, link=https://pypi.org/project/asciidoctest/]
-image:https://img.shields.io/badge/python-3.14-blue.svg[Python Version, link=https://www.python.org/]
+image:https://img.shields.io/badge/python-3.10%2B-blue.svg[Python Version, link=https://www.python.org/]
 image:https://img.shields.io/badge/coverage-97%25-green.svg[Test Coverage]
 image:https://img.shields.io/badge/License-Apache_2.0-blue.svg[License, link=https://opensource.org/licenses/Apache-2.0]
 
@@ -115,24 +115,72 @@ if __name__ == "__main__":
     unittest.main(defaultTest="suite")
 ----
 
-== Direct Docstring Extraction API
+== Programmatic API
 
-In addition to pytest and unittest runners, AsciiDoctest provides a direct programmatic API `extract_and_run_docstring_tests` to discover and run docstring doctests directly on files, directories, or module objects:
+In addition to pytest and unittest runners, AsciiDoctest provides a fully decoupled programmatic API that runs tests without requiring pytest.
+
+=== `run_adoc_tests` (Unified Runner)
+
+`run_adoc_tests` is the primary entry point for programmatic test execution. It accepts an `.adoc` file path, a `.py` file path, a directory, a loaded `types.ModuleType`, or a raw AsciiDoc content string, and returns a `TestSuiteResult` TypedDict:
 
 [source,python]
 ----
-from asciidoctest import extract_and_run_docstring_tests
+from asciidoctest import run_adoc_tests
+
+# Run tests in an .adoc file
+result = run_adoc_tests("docs/examples.adoc")
+print(result)  # => {'total': 4, 'passed': 4, 'failed': 0, 'failures': []}
+
+# Pass setup globals into the execution namespace
+result = run_adoc_tests("docs/guide.adoc", setup_globs={"ENGINE": "dag"})
+
+# Collect all failures without stopping at the first one
+result = run_adoc_tests("docs/guide.adoc", fail_fast=False)
+for failure in result["failures"]:
+    print(failure["message"])
+
+# Run against a .py file (routes to docstring extraction)
+result = run_adoc_tests("src/mypackage/utils.py")
+
+# Run against an entire directory
+result = run_adoc_tests("src/mypackage/")
+----
+
+The returned `TestSuiteResult` always contains:
+
+[cols="1,1,3"]
+|===
+| Key | Type | Description
+
+| `total` | `int` | Total number of test blocks found
+| `passed` | `int` | Number of blocks that executed without failure
+| `failed` | `int` | Number of blocks that failed
+| `failures` | `list[TestFailureDetail]` | Structured failure records (populated only when `fail_fast=False`)
+|===
+
+Each `TestFailureDetail` entry has: `name`, `message`, `lineno`, `got`, `want`.
+
+=== `extract_and_run_docstring_tests` (Docstring Runner)
+
+`extract_and_run_docstring_tests` (also aliased as `test_docstrings`) discovers and runs AsciiDoc docstring tests directly from Python source files, directories, or imported module objects:
+
+[source,python]
+----
+from asciidoctest import extract_and_run_docstring_tests, test_docstrings
 
 # Run doctests on a single Python source file
 stats = extract_and_run_docstring_tests("src/mypackage/utils.py")
-print(stats)  # => {'total': 3, 'passed': 3, 'failed': 0}
+print(stats)  # => {'total': 3, 'passed': 3, 'failed': 0, 'failures': []}
 
 # Run doctests across an entire directory tree
 stats = extract_and_run_docstring_tests("src/mypackage/")
 
 # Run doctests directly on an imported module
 import mypackage
-stats = extract_and_run_docstring_tests(mypackage)
+stats = test_docstrings(mypackage)
+
+# Collect all failures (default fail_fast=True raises on first failure)
+stats = extract_and_run_docstring_tests("src/mypackage/", fail_fast=False)
 ----
 
 == Testing in Pyodide & WebAssembly
@@ -267,36 +315,56 @@ We welcome contributions to link:https://github.com/webmaven/asciidoctest[AsciiD
 
 AsciiDoctest maintains strict quality standards:
 
-* Fully annotated link:https://www.python.org/[Python] types checked via link:https://mypy-lang.org/[mypy].
+* Fully annotated link:https://www.python.org/[Python] types checked via link:https://mypy-lang.org/[mypy] in strict mode.
 * Code formatting and linting verified with link:https://github.com/astral-sh/ruff[Ruff].
-* Comprehensive unit and integration test coverage kept above **95%**.
+* Comprehensive unit and integration test coverage enforced at **97%** minimum via coverage gate.
 
 To get started on development locally:
 
-1. Clone the repository and set up the virtual environment:
+1. Clone the repository and install link:https://hatch.pypa.io/[Hatch] with link:https://docs.astral.sh/uv/[uv]:
 +
 [source,bash]
 ----
 $ git clone https://github.com/webmaven/asciidoctest.git
 $ cd asciidoctest
-$ python3 -m venv .venv
-$ source .venv/bin/activate
-$ pip install -e ".[test,docs]"
+$ pip install hatch uv
 ----
 
-2. Run the complete test suite:
+2. Run the complete test suite (Hatch manages the virtual environment automatically):
 +
 [source,bash]
 ----
-$ pytest
+$ hatch run test
 ----
 
-3. Check code coverage reports:
+3. Check code coverage reports (enforced at ≥ 97%):
 +
 [source,bash]
 ----
-$ coverage run -m pytest
-$ coverage report -m
+$ hatch run coverage
+----
+
+4. Run the linter and formatter:
++
+[source,bash]
+----
+$ hatch run lint
+$ hatch run format
+----
+
+5. Run strict type checking:
++
+[source,bash]
+----
+$ hatch run typecheck
+----
+
+6. Build the documentation locally:
++
+[source,bash]
+----
+$ hatch run docs-build
+$ hatch run docs-serve
 ----
 
 == License

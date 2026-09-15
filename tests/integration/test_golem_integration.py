@@ -18,10 +18,8 @@ import pytest
 
 from asciidoctest import (
     AsciiDocTestFailure,
-    extract_and_run_docstring_tests,
     run_adoc_tests,
 )
-
 
 # ---------------------------------------------------------------------------
 # Test 1: Module docstrings via the programmatic API
