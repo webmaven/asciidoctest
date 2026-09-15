@@ -174,8 +174,18 @@ class DocstringTestItem(pytest.Item):
             )
 
     def runtest(self) -> None:
-        # Dynamically load the containing module
-        module_name = self.path.stem
+        # Derive a unique, path-based module name to avoid collisions when two
+        # files share the same stem (e.g. pkg_a/utils.py and pkg_b/utils.py).
+        try:
+            rel = self.path.relative_to(self.config.rootpath)
+        except ValueError:
+            rel = self.path
+        module_name = (
+            "_asciidoctest_"
+            + "_".join(rel.with_suffix("").parts)
+            .replace("-", "_")
+            .replace(".", "_")
+        )
         spec = importlib.util.spec_from_file_location(module_name, self.path)
         if spec is None or spec.loader is None:
             raise ImportError(f"Could not load spec for {self.path}")
@@ -186,6 +196,8 @@ class DocstringTestItem(pytest.Item):
             spec.loader.exec_module(module)
         except Exception as e:
             raise RuntimeError(f"Error executing module {module_name}: {e}") from e
+        finally:
+            sys.modules.pop(module_name, None)
 
         # Run docstring tests in a copy of the module's globals dictionary
         globals_copy = dict(module.__dict__)

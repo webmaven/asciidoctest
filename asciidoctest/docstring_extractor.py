@@ -63,7 +63,14 @@ def _run_tests_on_py_file(path: pathlib.Path, mode: str, stats: dict[str, Any]) 
     if not docstrings:
         return
 
-    module_name = path.stem
+    # Use a unique, path-derived name to avoid sys.modules collisions between
+    # same-named files in different subdirectories (Issue #8).
+    module_name = (
+        "_asciidoctest_"
+        + "_".join(path.with_suffix("").parts)
+        .replace("-", "_")
+        .replace(".", "_")
+    )
     spec = importlib.util.spec_from_file_location(module_name, path)
     if spec is None or spec.loader is None:
         return
@@ -78,6 +85,7 @@ def _run_tests_on_py_file(path: pathlib.Path, mode: str, stats: dict[str, Any]) 
     except Exception as e:
         raise RuntimeError(f"Error executing module {module_name}: {e}") from e
     finally:
+        sys.modules.pop(module_name, None)
         if sys.path and sys.path[0] == parent_dir:
             sys.path.pop(0)
 

@@ -841,7 +841,7 @@ def test_docstring_test_item_runtest_module_exec_error(
 
     with pytest.raises(
         RuntimeError,
-        match="Error executing module broken_exec: Import failed on import",
+        match=r"Error executing module.*broken_exec.*Import failed on import",
     ):
         item.runtest()
 
