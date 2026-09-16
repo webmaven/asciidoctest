@@ -425,3 +425,21 @@ def test_run_adoc_tests_from_directory(tmp_path: pathlib.Path) -> None:
     result = run_adoc_tests(tmp_path)
     assert result["total"] >= 1
     assert result["failed"] == 0
+
+
+def test_run_adoc_tests_dir_discovers_adoc_files(tmp_path: pathlib.Path) -> None:
+    adoc = tmp_path / "test.adoc"
+    adoc.write_text(
+        "= Doc\n\n[source,python,test]\n----\nassert 1 == 1\n----\n",
+        encoding="utf-8",
+    )
+    result = run_adoc_tests(tmp_path)
+    assert result["total"] >= 1
+    assert result["passed"] == result["total"]
+
+
+def test_run_adoc_tests_multiline_string_no_os_error() -> None:
+    source = "= Doc\n\n[source,python,test]\n----\nassert True\n----\n"
+    result = run_adoc_tests(source)
+    assert result["total"] == 1
+    assert result["passed"] == 1

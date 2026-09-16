@@ -124,6 +124,20 @@ def run_adoc_tests(
         _run_tests_on_module(source, mode=mode, stats=stats, fail_fast=fail_fast)
         return stats
 
+    # Guard: if source is a multi-line string it cannot be a filesystem path.
+    # Passing such a string to pathlib.Path().exists() raises OSError (ENAMETOOLONG)
+    # on Linux/Windows when the string is very long.
+    if isinstance(source, str) and "\n" in source:
+        _run_adoc_content(
+            source,
+            name="<string>",
+            globs=globs,
+            mode=mode,
+            fail_fast=fail_fast,
+            stats=stats,
+        )
+        return stats
+
     path = pathlib.Path(source) if not isinstance(source, pathlib.Path) else source
 
     if path.exists():
@@ -140,10 +154,18 @@ def run_adoc_tests(
         elif path.suffix == ".py":
             _run_tests_on_py_file(path, mode=mode, stats=stats, fail_fast=fail_fast)
         elif path.is_dir():
-            for py_file in sorted(path.rglob("*.py")):
-                _run_tests_on_py_file(
-                    py_file, mode=mode, stats=stats, fail_fast=fail_fast
+            for adoc_file in sorted(path.rglob("*.adoc")):
+                content = adoc_file.read_text("utf-8")
+                _run_adoc_content(
+                    content,
+                    name=str(adoc_file),
+                    globs=globs,
+                    mode=mode,
+                    fail_fast=fail_fast,
+                    stats=stats,
                 )
+            for py_file in sorted(path.rglob("*.py")):
+                _run_tests_on_py_file(py_file, mode=mode, stats=stats, fail_fast=fail_fast)
     else:
         # Treat as raw AsciiDoc content string
         _run_adoc_content(
