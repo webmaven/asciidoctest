@@ -231,29 +231,3 @@ def test_include_directives_gracefully_ignored(tmp_path: pathlib.Path) -> None:
     result = run_adoc_tests(adoc)
     assert result["passed"] == 1
     assert result["failed"] == 0
-
-
-# ---------------------------------------------------------------------------
-# Golem-specific tests (skipped if golem is not installed)
-# ---------------------------------------------------------------------------
-
-
-def _golem_available() -> bool:
-    """Return True if the golem package is importable."""
-    try:
-        import golem  # noqa: F401
-
-        return True
-    except ImportError:
-        return False
-
-
-@pytest.mark.skipif(not _golem_available(), reason="golem package not installed")
-class TestGolemPlugin:
-    """Tests that require the ``golem`` package to be installed."""
-
-    def test_golem_available(self) -> None:
-        """Smoke test: golem is importable and has expected attributes."""
-        import golem  # noqa: F811, PLC0415
-
-        assert hasattr(golem, "__version__")

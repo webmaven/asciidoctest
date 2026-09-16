@@ -165,7 +165,9 @@ def run_adoc_tests(
                     stats=stats,
                 )
             for py_file in sorted(path.rglob("*.py")):
-                _run_tests_on_py_file(py_file, mode=mode, stats=stats, fail_fast=fail_fast)
+                _run_tests_on_py_file(
+                    py_file, mode=mode, stats=stats, fail_fast=fail_fast
+                )
     else:
         # Treat as raw AsciiDoc content string
         _run_adoc_content(
