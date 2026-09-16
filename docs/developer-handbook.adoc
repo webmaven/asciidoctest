@@ -3,9 +3,9 @@
 :idprefix:
 :idseparator: -
 
-This document serves as the developer handbook, contribution guide, and architectural specification for link:https://github.com/webmaven/asciidoctest[`asciidoctest`].
+This document describes the codebase architecture, testing conventions, and development workflows for link:https://github.com/webmaven/asciidoctest[`asciidoctest`].
 
-We warmly welcome contributions of all kinds! Whether you are fixing a bug, adding new features, improving documentation, or proposing design enhancements, this handbook will guide you through our codebase architecture, testing conventions, and contribution workflows. Please review our link:https://github.com/webmaven/asciidoctest/blob/main/SECURITY.adoc[Security Policy] before running untrusted code blocks during local development.
+Please review the link:https://github.com/webmaven/asciidoctest/blob/main/SECURITY.adoc[Security Policy] before running untrusted code blocks during local development.
 
 == Codebase Architecture
 
@@ -24,73 +24,81 @@ graph TD
     F --> G[CustomDocTestRunner / exec]
 ----
 
-* **`parser.py`**: Extracts test blocks using link:https://github.com/webmaven/asciidoctrine[`asciidoctrine`] (with `preprocess_directives=False` by default to tolerate illustrative includes) and link:https://github.com/webmaven/asciidocstring[`asciidocstring`] (for Python docstrings). Tracks top-level section boundaries via `SafeTestBlockExtractorVisitor`, parses marker attributes (`test`, `shared`, `reset`), and extracts named context scopes (`shared="<name>"`). Also statically discovers docstrings in Python source files via `find_docstrings_in_py_file`.
-* **`runner.py`**: Coordinates execution across interactive REPL blocks and non-interactive script blocks. Enforces namespace scoping, automatic section boundary resets, explicit `reset` directives, and named context state maps.
-* **`docstring_extractor.py`**: Implements the direct programmatic API `extract_and_run_docstring_tests` to discover, extract, and execute doctests from Python files, directories, or loaded modules with per-symbol scope isolation.
-* **`pytest_plugin.py`**: Discovers files statically, collects docstrings from Python modules without executing code during discovery, and handles test execution and error formatting for link:https://docs.pytest.org/[pytest].
+* **`parser.py`**: Extracts test blocks using link:https://github.com/webmaven/asciidoctrine[`asciidoctrine`] (with `preprocess_directives=False` by default to ignore illustrative includes) and link:https://github.com/webmaven/asciidocstring[`asciidocstring`] (for Python docstrings). Tracks section boundaries, parses marker attributes (`test`, `shared`, `reset`), and extracts named context scopes (`shared="<name>"`). Also statically discovers docstrings in Python source files via `find_docstrings_in_py_file`.
+* **`runner.py`**: Coordinates execution across interactive REPL blocks and script blocks. Enforces namespace scoping, section boundary resets, explicit `reset` directives, and named context state maps.
+* **`docstring_extractor.py`**: Implements the programmatic APIs `run_adoc_tests` and `extract_and_run_docstring_tests` to discover, extract, and execute doctests from `.adoc` files, `.py` files, directories, or loaded modules with per-symbol scope isolation.
+* **`pytest_plugin.py`**: Discovers files statically, collects docstrings from Python modules without executing module code during discovery, and handles test execution and error formatting for link:https://docs.pytest.org/[pytest].
 * **`unittest_integration.py`**: Wraps test collection and execution in standard library link:https://docs.python.org/3/library/unittest.html[unittest] adapters (`DocFileSuite` and `DocTestSuite`).
 
 == Testing and Coverage
 
 * **`tests/test_runner.py`**: Tests runner mechanics and state persistence.
 * **`tests/test_scoping.py`**: Tests named context scopes and explicit reset markers.
-* **`tests/test_section_scoping.py`**: Tests top-level AST section boundary resets.
-* **`tests/test_parser_includes.py`**: Tests tolerant illustrative include directive handling (`preprocess_directives=False`).
-* **`tests/test_docstring_extraction.py`**: Tests direct Python docstring extraction across files, directories, and modules.
-* **`tests/test_plugin.py`**: Validates basic pytest collection.
-* **`tests/test_plugin_coverage.py`**: Tests error boundaries and collection failures.
+* **`tests/test_section_scoping.py`**: Tests AST section boundary resets.
+* **`tests/test_parser_includes.py`**: Tests illustrative include directive handling (`preprocess_directives=False`).
+* **`tests/test_docstring_extraction.py`**: Tests Python docstring extraction across files, directories, and modules.
+* **`tests/test_api.py`**: Tests programmatic runner API (`run_adoc_tests`) and `fail_fast` behavior.
+* **`tests/integration/`**: Tests API consumer workflows and end-to-end execution patterns.
+* **`tests/test_plugin.py`**: Validates pytest collection.
+* **`tests/test_plugin_collision.py`**: Tests module name isolation for same-named files across directories.
+* **`tests/test_plugin_coverage.py`**: Tests error boundaries and collection edge cases.
 * **`tests/test_unittest_integration.py`**: Tests unittest adapters.
 * **`tests/test_footnotes.py`**: Verifies footnote compatibility.
 
-=== Coverage Measurement
+=== Development Commands
+
+Using Hatch:
 
 [source,bash]
 ----
-$ .venv/bin/coverage run -m pytest
-$ .venv/bin/coverage report -m
+hatch run test          # Run test suite with coverage
+hatch run cov-report    # Display coverage report
+hatch run lint          # Run ruff check
+hatch run format        # Check ruff formatting
+hatch run format-fix    # Apply ruff formatting
+hatch run typecheck     # Run mypy in strict mode
+hatch run docs-build    # Build Sphinx documentation
+hatch run docs-serve    # Serve built HTML documentation locally
 ----
 
 == Pre-Release Checklist
 
 === 1. Dependency Audit
-* [ ] Verify that constraints in `pyproject.toml` are correctly aligned with the latest stable dependency releases.
-* [ ] Ensure `asciidocstring` points to stable pre-release/release versions (e.g. `>=0.1.0a2`), avoiding premature or yanked releases.
+* [ ] Verify that constraints in `pyproject.toml` match expected dependency versions.
+* [ ] Verify that `pylock.toml` is up to date.
 
 === 2. Code Quality and Style
-* [ ] Format code using link:https://github.com/astral-sh/ruff[Ruff] code style checker (`ruff check` and `ruff format`).
-* [ ] Run static type checking via link:https://mypy-lang.org/[mypy] to ensure type-safety across all modules.
+* [ ] Format code using link:https://github.com/astral-sh/ruff[Ruff] (`hatch run format` or `ruff check` / `ruff format`).
+* [ ] Run static type checking via link:https://mypy-lang.org/[mypy] in strict mode (`hatch run typecheck` or `mypy --strict asciidoctest`).
 
 === 3. Verification Suite
-* [ ] Install the package in editable mode with test and documentation dependencies:
+* [ ] Run the test suite:
 +
 [source,bash]
 ----
-$ .venv/bin/pip install -e ".[test,docs]"
+hatch run test
 ----
-* [ ] Run the complete test suite:
+* [ ] Verify code coverage meets the 97% requirement:
 +
 [source,bash]
 ----
-$ .venv/bin/pytest
-----
-* [ ] Measure code coverage and confirm that coverage remains above 95% total:
-+
-[source,bash]
-----
-$ .venv/bin/coverage run -m pytest
-$ .venv/bin/coverage report
+hatch run cov-report
 ----
 
 === 4. Documentation Check
-* [ ] Confirm that all examples inside `README.adoc` pass successfully under our self-verifying test suite.
-* [ ] Review `SECURITY.adoc` and `docs/security.adoc` to ensure supported versions and reporting guidelines are up to date.
-* [ ] Update `CHANGELOG.adoc` to catalog the latest changes, additions, and fixed bugs under the appropriate release version header.
+* [ ] Confirm that examples in `README.adoc` and documentation files pass during test execution.
+* [ ] Review `SECURITY.adoc` and `docs/security.adoc` to ensure supported versions and reporting guidelines are current.
+* [ ] Update `CHANGELOG.adoc` and `docs/changelog.adoc` with release notes for the target version.
 
 === 5. Publishing Preparation
 * [ ] Update the `version` field in `pyproject.toml`.
-* [ ] Run build checks to generate clean source and wheel distributions:
+* [ ] Build distribution packages:
 +
 [source,bash]
 ----
-$ .venv/bin/python3 -m build
+python -m build
 ----
+
+'''
+
+xref:state-models.adoc[< Executable State Models] | xref:security.adoc[Security Policy >]

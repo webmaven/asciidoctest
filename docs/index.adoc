@@ -20,44 +20,48 @@ AsciiDoctest parses, collects, and verifies Python code blocks directly from Asc
 
 == Why Doctests?
 
-Traditional software testing separates test code from documentation, leading to a common problem: *documentation rot*. As APIs evolve, code examples in tutorials and docstrings quietly break.
+Traditional software testing separates test code from documentation, which can lead to documentation drift. As APIs evolve, code examples in tutorials and docstrings can become outdated.
 
-Executable doctests solve this by turning documentation into verifiable test suites:
+Executable doctests address this by turning documentation into testable examples:
 
-* *Eliminate Documentation Rot* — Every code example in your guides and docstrings is automatically executed and validated during CI/CD.
-* *Literate Programming* — Write executable narrative guides where documentation and test cases share a single source of truth.
-* *Build Trust* — Give users complete confidence that every tutorial step and example in your documentation actually works as written.
+* *Prevent Documentation Drift* — Code examples in your guides and docstrings are executed and validated during testing.
+* *Executable Narratives* — Write guides where documentation and test cases share a single source of truth.
+* *Verify Examples* — Ensure that tutorial steps and examples in your documentation work as written.
 
 == Why AsciiDoc?
 
-In the Python ecosystem, documentation has historically been split between *reStructuredText (reST)* for Sphinx docs/docstrings and *Markdown* for lightweight READMEs. AsciiDoc provides a modern, production-grade alternative that combines technical depth with readable syntax:
+AsciiDoc provides structured document architecture with readable syntax:
 
-* *Overcoming reStructuredText Complexity* — While reST is powerful, its syntax is notoriously brittle—strict whitespace indentation rules, awkward double-backtick code markup (`code`), and verbose directive blocks (`code-block`). AsciiDoc offers equal or superior document architecture with clean, human-friendly markup (`[source,python]`).
-* *Beyond Markdown's Structural Limits* — Markdown lacks standardized syntax for block attributes, callouts, complex tables, cross-references, and modular document includes (`include::[]`). AsciiDoc supports all of these natively without relying on non-standard parser extensions or raw HTML.
-* *First-Class Block Attributes & Roles* — AsciiDoc provides built-in attribute syntax (e.g., `[source,python,shared]` or `[source,python,test]`) that cleanly attaches execution metadata to code blocks without cluttering narrative text or breaking rendering.
+* *Clear Syntax* — AsciiDoc offers structured document capabilities with concise markup (`[source,python]`).
+* *Rich Structure* — AsciiDoc natively supports block attributes, callouts, tables, cross-references, and modular document includes (`include::[]`).
+* *Block Attributes & Roles* — AsciiDoc provides attribute syntax (e.g., `[source,python,shared]` or `[source,python,test]`) to attach execution metadata directly to code blocks.
 
 == Why AsciiDoctest?
 
-Standard Python `doctest` extractors rely on regex-based string matching, which fails when encountering complex markup, nested list blocks, callout annotations, or custom attributes.
+Standard doctest extraction based on regular expressions can struggle with complex markup, nested blocks, callouts, or custom block attributes.
 
-AsciiDoctest was designed specifically to bring robust, AST-level testing to AsciiDoc:
+AsciiDoctest brings AST-level testing to AsciiDoc:
 
-* *AST-Based Precision* — Leverages link:https://github.com/webmaven/asciidoctrine[asciidoctrine] and link:https://github.com/webmaven/asciidocstring[asciidocstring] to parse true document syntax trees. It correctly preserves source coordinates (line/column numbers), block boundaries, and nested elements without fragile regex heuristics.
-* *Symmetric Execution State Models* — Provides a unified, predictable state model (`test` for isolated execution, `shared` for stateful step-by-step notebook guides, and `shared, test` for ephemeral snapshots) across both interactive REPL (`>>>`) and non-interactive script blocks.
-* *Native Ecosystem Integration* — Seamlessly connects to modern Python test runners via a link:https://docs.pytest.org/[pytest] discovery collector and standard library link:https://docs.python.org/3/library/unittest.html[unittest] suite adapters (`DocFileSuite`, `DocTestSuite`).
+* *AST-Based Parsing* — Uses link:https://github.com/webmaven/asciidoctrine[asciidoctrine] and link:https://github.com/webmaven/asciidocstring[asciidocstring] to parse document syntax trees, preserving source coordinates, block boundaries, and nested elements.
+* *Execution State Models* — Provides consistent state models (`test` for isolated execution, `shared` for stateful sequential guides, and `shared, test` for ephemeral snapshots) across interactive REPL (`>>>`) and script blocks.
+* *Test Runner Integration* — Integrates with link:https://docs.pytest.org/[pytest] through automated test discovery, with standard library link:https://docs.python.org/3/library/unittest.html[unittest] suite adapters (`DocFileSuite`, `DocTestSuite`), and programmatic execution via `run_adoc_tests`.
 
 == Key Features
 
-* *AST-Based Docstring & Document Parsing* — Extracts test blocks using full document syntax trees.
+* *AST-Based Docstring & Document Parsing* — Extracts test blocks using document syntax trees.
 * *Flexible Execution Modes*:
-  - `explicit` (default): Only executes blocks with `test` or `shared` markers.
+  - `explicit` (default): Only executes blocks with `test`, `shared`, or `reset` markers.
   - `eager`: Automatically tests all `[source,python]` listings as isolated blocks when no explicit markers exist in the document.
-* *Comprehensive Test Runner Support* — Direct integration with `pytest` and `unittest`.
+* *Test Runner Support* — Direct integration with `pytest`, `unittest`, and programmatic execution via `run_adoc_tests`.
 
 == Documentation Sections
 
 * xref:getting-started.adoc[Getting Started] — Package installation, pytest configuration, and unittest integration.
-* xref:state-models.adoc[Executable State Models] — Deep dive into isolated, persistent shared, and ephemeral copy execution namespaces.
-* xref:developer-handbook.adoc[Developer Handbook] — Architecture overview, test suite design, and pre-release verification checklist.
+* xref:state-models.adoc[Executable State Models] — Isolated, persistent shared, and ephemeral copy execution namespaces.
+* xref:developer-handbook.adoc[Developer Handbook] — Architecture overview, test suite design, and development commands.
 * xref:security.adoc[Security Policy] — Supported versions, execution safety context, and vulnerability reporting.
-* xref:changelog.adoc[Changelog] — Comprehensive historical release notes and version updates.
+* xref:changelog.adoc[Changelog] — Release notes and version history.
+
+'''
+
+Next: xref:getting-started.adoc[Getting Started >]

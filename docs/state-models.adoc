@@ -164,7 +164,7 @@ new_value = 99
 === Section Boundary Scoping (`== Section`)
 
 When a document has multiple top-level sections (`==`), crossing a section boundary
-automatically resets the default shared namespace and all named contexts, preventing
+resets the default shared namespace and all named contexts, preventing
 state from leaking between unrelated topics or API groups.
 
 [source,adoc]
@@ -185,3 +185,7 @@ assert "section_one_var" not in dir()
 section_two_var = "world"
 \----
 ----
+
+'''
+
+xref:getting-started.adoc[< Getting Started] | xref:developer-handbook.adoc[Developer Handbook >]

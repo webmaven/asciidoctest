@@ -1,9 +1,9 @@
 = Changelog
 :toc: left
 
-This document lists all notable changes and releases for `asciidoctest`.
+This document lists notable changes and releases for `asciidoctest`.
 
-== 0.2.0a6 - 2026-09-15
+== link:https://pypi.org/project/asciidoctest/0.2.0a6/[0.2.0a6] - 2026-09-16
 
 === Added
 
@@ -11,41 +11,41 @@ This document lists all notable changes and releases for `asciidoctest`.
   - Introduced `asciidoctest.run_adoc_tests(source, *, setup_globs=None, mode="explicit", fail_fast=False) -> TestSuiteResult` as the primary entry point for running AsciiDoc tests without requiring pytest.
   - Accepts `.adoc` files, `.py` files, directories, `types.ModuleType` instances, or raw AsciiDoc content strings.
   - Returns a `TestSuiteResult` TypedDict with `total`, `passed`, `failed`, and `failures` keys.
-  - `setup_globs` injects arbitrary variables into the test execution namespace (e.g., `setup_globs={"ENGINE": "dag"}`).
-  - `test_docstrings` is now a direct alias for `extract_and_run_docstring_tests` (same function object, no shim layer).
+  - `setup_globs` injects variables into the test execution namespace (e.g., `setup_globs={"ENGINE": "dag"}`).
+  - `test_docstrings` is an alias for `extract_and_run_docstring_tests`.
 * **`fail_fast` Option for Docstring Testing (Issue #4)**:
   - `extract_and_run_docstring_tests` now accepts `fail_fast: bool = True`.
   - When `fail_fast=False`, all failures are collected and returned in `result["failures"]` rather than raising immediately.
   - `TestFailureDetail` TypedDict captures `name`, `message`, `lineno`, `got`, and `want` for each failure.
 * **Structured Result TypedDicts**:
   - `TestSuiteResult` and `TestFailureDetail` are exported from `asciidoctest` and included in `__all__`.
-* **Golem Integration Test Suite (Issue #21)**:
-  - Added `tests/integration/test_golem_integration.py` exercising the programmatic API end-to-end: module docstring testing, `setup_globs` injection, `fail_fast` halt behavior, module collision isolation, failure line number reporting, and tolerant include handling.
+* **Integration Test Suite (Issue #21)**:
+  - Added `tests/integration/test_golem_integration.py` exercising the programmatic API end-to-end: module docstring testing, `setup_globs` injection, `fail_fast` behavior, module collision isolation, failure line number reporting, and tolerant include handling.
 * **Build Modernization**:
   - Migrated build backend from `setuptools.build_meta` to `hatchling.build`.
-  - Added Hatch environment scripts: `test`, `coverage`, `lint`, `format`, `typecheck`, `docs-build`, `docs-serve`, `build`.
-  - Configured `[tool.hatch.envs.default]` with `installer = "uv"` for fast, reproducible installs.
-  - Added `pylock.toml` PEP 751-format lockfile committed for reproducible environments.
+  - Added Hatch environment scripts: `test`, `cov-report`, `lint`, `format`, `typecheck`, `docs-build`, `docs-serve`.
+  - Configured `[tool.hatch.envs.default]` with `installer = "uv"` for fast installs.
+  - Added committed `pylock.toml` lockfile.
 * **CI Matrix Expansion**:
   - Extended `.github/workflows/ci.yml` Python version matrix to `["3.10", "3.11", "3.12", "3.13", "3.14"]`.
-  - Added `astral-sh/setup-uv@v3` step so CI installs uv before running Hatch.
+  - Added `astral-sh/setup-uv@v3` step for uv caching and installation.
 
 === Fixed
 
 * **Module Name Collision in pytest Docstring Collector (Issue #8)**:
   - `DocstringTestItem.runtest()` in `pytest_plugin.py` now derives a unique module name using the file's path relative to `rootdir` (prefixed `_asciidoctest_`), preventing same-named files in different subdirectories from colliding in `sys.modules`.
   - Applied the same fix to `_run_tests_on_py_file()` in `docstring_extractor.py`.
-  - The dynamically loaded module is now removed from `sys.modules` after execution (via `finally` block) to prevent test isolation leakage.
+  - The dynamically loaded module is removed from `sys.modules` after execution (via `finally` block) to preserve test isolation.
 
 === Changed
 
-* **Strict Type Checking**: `[tool.mypy]` is now configured with `strict = true`; all modules pass `mypy --strict` with zero errors.
-* **Coverage Gate**: `[tool.coverage.report]` is now configured with `fail_under = 97`; the coverage gate is enforced automatically on every run.
+* **Strict Type Checking**: `[tool.mypy]` is configured with `strict = true`; all modules pass `mypy --strict` with zero errors.
+* **Coverage Gate**: `[tool.coverage.report]` is configured with `fail_under = 97`; coverage gate is enforced automatically.
 * **Upgraded Dependencies**:
   - Upgraded `asciidoctrine` dependency constraint to `>=0.2.0a8`.
   - Upgraded `asciidocstring` dependency constraint to `>=0.1.0a11`.
   - Updated `requires-python = ">=3.10"`.
-* **Updated `__all__` in `asciidoctest/__init__.py`**: Now exports `AsciiDocTestFailure`, `DocFileSuite`, `DocTestSuite`, `run_adoc_tests`, `extract_and_run_docstring_tests`, `test_docstrings`, `TestSuiteResult`, `TestFailureDetail`.
+* **Updated `__all__` in `asciidoctest/__init__.py`**: Exports `AsciiDocTestFailure`, `DocFileSuite`, `DocTestSuite`, `run_adoc_tests`, `extract_and_run_docstring_tests`, `test_docstrings`, `TestSuiteResult`, `TestFailureDetail`.
 
 ---
 
