@@ -118,7 +118,7 @@ def test_adoc_failure_reporting(pytester):
     result = pytester.runpytest("-v")
     result.assert_outcomes(passed=0, failed=1)
     stdout = result.stdout.str()
-    assert "Test block failure at line 3" in stdout
+    assert "Test block failure at line 5" in stdout
     assert "Expected:" in stdout
     assert "99" in stdout
     assert "Got:" in stdout
