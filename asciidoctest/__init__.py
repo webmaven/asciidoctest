@@ -1,6 +1,7 @@
 from asciidoctest.docstring_extractor import (
     TestFailureDetail,
     TestSuiteResult,
+    DocstringTestSummary,
     extract_and_run_docstring_tests,
     run_adoc_tests,
 )
@@ -17,5 +18,6 @@ __all__ = [
     "extract_and_run_docstring_tests",
     "test_docstrings",
     "TestSuiteResult",
+    "DocstringTestSummary",
     "TestFailureDetail",
 ]

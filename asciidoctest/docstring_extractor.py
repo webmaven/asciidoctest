@@ -22,7 +22,11 @@ class TestFailureDetail(TypedDict):
 
 
 class TestSuiteResult(TypedDict):
-    """Aggregate result returned by programmatic test runners."""
+    """Aggregate result returned by programmatic test runners.
+
+    ``DocstringTestSummary`` is a public alias for this type, kept for
+    compatibility with the naming used in issue #14.
+    """
 
     total: int
     passed: int
@@ -325,3 +329,6 @@ def _run_tests_on_module(
             walk_class(member, f"{mod.__name__}.{attr_name}")
         elif inspect.isroutine(member):
             process_object(f"{mod.__name__}.{attr_name}", member)
+
+#: Public alias for :class:`TestSuiteResult` (issue #14 naming).
+DocstringTestSummary = TestSuiteResult
