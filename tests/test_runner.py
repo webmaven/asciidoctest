@@ -292,14 +292,7 @@ def test_traceback_line_numbers_are_absolute_doc_lines() -> None:
 
 def test_traceback_line_numbers_absolute_plain_block() -> None:
     """Same alignment for a plain delimiter block (no attribute line)."""
-    doc = (
-        "= t\n"
-        "\n"
-        "----\n"
-        "x = 1\n"
-        "assert x == 2\n"
-        "----\n"
-    )
+    doc = "= t\n\n----\nx = 1\nassert x == 2\n----\n"
     stats = asciidoctest.run_adoc_tests(doc, mode="eager")
     assert stats["failed"] == 1
     message = stats["failures"][0]["message"]
