@@ -9,6 +9,8 @@ This document lists notable changes and releases for `asciidoctest`.
 
 * **Case-Insensitive Block Marker Detection (Issue #9)**: Marker attributes (`test`, `shared`, `reset`) are now detected case-insensitively in `[source,python,...]` block roles, positional values, and attribute keys — e.g. `[source,python,Test]`, `[source,python,test,Shared]`, and `[source,python,TEST=...]` all behave identically to their lowercase forms. Matching is whole-word (a role of `testing` does not match `test`), and `shared=none` / `shared=reset` values remain case-insensitive falsy values.
 
+* **Accurate Traceback Line Numbers in Non-Interactive Blocks (Issue #5)**: Test block `line_number` values now point at the block's first real content line instead of its opening metadata (attribute line or delimiter). Tracebacks and doctest output from non-interactive test blocks therefore reference true document lines, so an error in a block deep inside a large document points at the actual failing source line.
+
 == link:https://pypi.org/project/asciidoctest/0.2.0a6/[0.2.0a6] - 2026-09-16
 
 === Added
