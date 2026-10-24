@@ -4,6 +4,7 @@ import pytest
 
 from asciidoctest.parser import parse_adoc_tests
 from asciidoctest.runner import AsciiDocTestFailure, run_test_blocks
+import asciidoctest
 
 
 class MockBlock:
@@ -266,3 +267,41 @@ def test_package_exports():
         "TestSuiteResult",
         "TestFailureDetail",
     }
+
+
+def test_traceback_line_numbers_are_absolute_doc_lines() -> None:
+    """Regression for issue #5: tracebacks must reference real document lines."""
+    doc = (
+        "= t\n"
+        "\n"
+        "Some intro text.\n"
+        "\n"
+        "[source,python,test]\n"
+        "----\n"
+        "x = 1\n"
+        "assert x == 2\n"
+        "----\n"
+    )
+    stats = asciidoctest.run_adoc_tests(doc)
+    assert stats["failed"] == 1
+    message = stats["failures"][0]["message"]
+    # The assert lives on document line 8; the traceback must say so.
+    assert "<block_at_line_7>" in message
+    assert "line 8, in <module>" in message
+
+
+def test_traceback_line_numbers_absolute_plain_block() -> None:
+    """Same alignment for a plain delimiter block (no attribute line)."""
+    doc = (
+        "= t\n"
+        "\n"
+        "----\n"
+        "x = 1\n"
+        "assert x == 2\n"
+        "----\n"
+    )
+    stats = asciidoctest.run_adoc_tests(doc, mode="eager")
+    assert stats["failed"] == 1
+    message = stats["failures"][0]["message"]
+    assert "<block_at_line_4>" in message
+    assert "line 5, in <module>" in message

@@ -131,8 +131,11 @@ def run_test_blocks(blocks: list[Any], shared_globals: dict[str, Any]) -> None:
                 code_content = block.content
                 if not code_content.endswith("\n"):
                     code_content += "\n"
+                # Pad with leading newlines so traceback line numbers align
+                # with the source document rather than the block itself.
+                padded_code = "\n" * (block.line_number - 1) + code_content
                 compiled_code = compile(
-                    code_content, f"<block_at_line_{block.line_number}>", "exec"
+                    padded_code, f"<block_at_line_{block.line_number}>", "exec"
                 )
                 exec(compiled_code, test_globals)
             except AssertionError:

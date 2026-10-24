@@ -176,15 +176,45 @@ def parse_adoc_tests(
 
     any_explicit = any(has_explicit_markers(b) for b in all_blocks)
 
-    if any_explicit:
-        # Eager mode is bypassed/disabled when any block has explicit markers.
-        # Only return the explicitly marked blocks.
-        return [b for b in all_blocks if has_explicit_markers(b)]
-    else:
-        # If no explicit markers are present, eager mode runs all blocks as default 'test' blocks.
-        if mode == "eager":
-            return all_blocks
-        return []
+    result = [b for b in all_blocks if has_explicit_markers(b)] if any_explicit else (
+        all_blocks if mode == "eager" else []
+    )
+    align_block_line_numbers(content, result)
+    return result
+
+
+def align_block_line_numbers(content: str, blocks: list[Any]) -> None:
+    """
+    Rewrite each block's ``line_number`` to the true document line of its
+    first non-blank line of code.
+
+    ``block.line_number`` as emitted by the parser points at the block's
+    first metadata line (the attribute line when one is present, otherwise
+    the block delimiter), so the number of lines between it and the first
+    line of content varies with the block's header.  Since tracebacks and
+    doctest output must reference real document lines, we locate the first
+    non-blank content line in the raw source and store that instead.
+
+    Note: when ``preprocess_directives`` is enabled, include processing may
+    shift lines, in which case aligned numbers are best-effort.
+    """
+    doc_lines = content.splitlines()
+    for block in blocks:
+        code = str(getattr(block, "content", "") or "")
+        code_lines = code.split("\n")
+        # Leading blank lines are inert in Python; drop them so the stored
+        # line_number points at executable content.
+        while code_lines and not code_lines[0].strip():
+            code_lines.pop(0)
+        if not code_lines:
+            continue
+        block.content = "\n".join(code_lines)
+        first = code_lines[0].strip()
+        start = int(getattr(block, "line_number", 1) or 1)
+        for idx in range(max(start, 1) - 1, len(doc_lines)):
+            if doc_lines[idx].strip() == first:
+                block.line_number = idx + 1
+                break
 
 
 def extract_docstring_tests(docstring: str, mode: str = "explicit") -> list[Any]:
@@ -210,14 +240,11 @@ def extract_docstring_tests(docstring: str, mode: str = "explicit") -> list[Any]
 
     any_explicit = any(has_explicit_markers(b) for b in all_blocks)
 
-    if any_explicit:
-        # Eager mode is bypassed/disabled. Only return the explicitly marked blocks.
-        return [b for b in all_blocks if has_explicit_markers(b)]
-    else:
-        # If no explicit markers are present, eager mode runs all blocks as default 'test' blocks.
-        if mode == "eager":
-            return all_blocks
-        return []
+    result = [b for b in all_blocks if has_explicit_markers(b)] if any_explicit else (
+        all_blocks if mode == "eager" else []
+    )
+    align_block_line_numbers(docstring, result)
+    return result
 
 
 class _DocstringVisitor(ast.NodeVisitor):
