@@ -70,49 +70,57 @@ class SafeTestBlockExtractorVisitor(TestBlockExtractorVisitor):
                 )
 
 
+def _marker_present(block: Any, marker: str) -> bool:
+    """
+    Inspects a block's attributes, roles, and positional parameters
+    to determine if it carries the given marker, case-insensitively.
+    """
+    attrs = getattr(block, "attributes", {}) or {}
+    wanted = marker.lower()
+    for key, value in attrs.items():
+        if not isinstance(key, str):
+            continue
+        # marker as attribute key, e.g. `reset=true`
+        if key.lower() == wanted:
+            return True
+        # marker inside an attribute value: whole-word match or a
+        # positional-style list such as ["source", "python", "Reset"]
+        values = value if isinstance(value, (list, tuple)) else [value]
+        for item in values:
+            if isinstance(item, str):
+                tokens = item.lower().split()
+                if item.lower() == wanted or wanted in tokens:
+                    return True
+            elif item is True and key.lower() == wanted:
+                return True
+    return False
+
+
 def block_has_test_marker(block: Any) -> bool:
     """
     Inspects a block's attributes, roles, and positional parameters
     to determine if it has been explicitly marked as a 'test' block.
+    Matching is case-insensitive, so ``[source,python,TEST]`` counts too.
     """
-    attrs = getattr(block, "attributes", {}) or {}
-    return (
-        "test" in attrs
-        or attrs.get("test") == "true"
-        or attrs.get("role") == "test"
-        or "test" in attrs.get("positional", [])
-        or ("test" in str(attrs.get("role", "")).split())
-    )
+    return _marker_present(block, "test")
 
 
 def block_has_shared_marker(block: Any) -> bool:
     """
     Inspects a block's attributes, roles, and positional parameters
     to determine if it has been explicitly marked as a 'shared' block.
+    Matching is case-insensitive, so ``[source,python,Shared]`` counts too.
     """
-    attrs = getattr(block, "attributes", {}) or {}
-    return (
-        "shared" in attrs
-        or attrs.get("shared") == "true"
-        or attrs.get("role") == "shared"
-        or "shared" in attrs.get("positional", [])
-        or ("shared" in str(attrs.get("role", "")).split())
-    )
+    return _marker_present(block, "shared")
 
 
 def block_has_reset_marker(block: Any) -> bool:
     """
     Inspects a block's attributes, roles, and positional parameters
     to determine if it has been marked with a 'reset' directive.
+    Matching is case-insensitive, so ``[source,python,Reset]`` counts too.
     """
-    attrs = getattr(block, "attributes", {}) or {}
-    return (
-        "reset" in attrs
-        or attrs.get("reset") == "true"
-        or attrs.get("role") == "reset"
-        or "reset" in attrs.get("positional", [])
-        or ("reset" in str(attrs.get("role", "")).split())
-    )
+    return _marker_present(block, "reset")
 
 
 def block_get_shared_context(block: Any) -> str | None:
