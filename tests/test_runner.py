@@ -2,9 +2,9 @@ import textwrap
 
 import pytest
 
+import asciidoctest
 from asciidoctest.parser import parse_adoc_tests
 from asciidoctest.runner import AsciiDocTestFailure, run_test_blocks
-import asciidoctest
 
 
 class MockBlock:
