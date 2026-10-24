@@ -176,8 +176,10 @@ def parse_adoc_tests(
 
     any_explicit = any(has_explicit_markers(b) for b in all_blocks)
 
-    result = [b for b in all_blocks if has_explicit_markers(b)] if any_explicit else (
-        all_blocks if mode == "eager" else []
+    result = (
+        [b for b in all_blocks if has_explicit_markers(b)]
+        if any_explicit
+        else (all_blocks if mode == "eager" else [])
     )
     align_block_line_numbers(content, result)
     return result
@@ -240,8 +242,10 @@ def extract_docstring_tests(docstring: str, mode: str = "explicit") -> list[Any]
 
     any_explicit = any(has_explicit_markers(b) for b in all_blocks)
 
-    result = [b for b in all_blocks if has_explicit_markers(b)] if any_explicit else (
-        all_blocks if mode == "eager" else []
+    result = (
+        [b for b in all_blocks if has_explicit_markers(b)]
+        if any_explicit
+        else (all_blocks if mode == "eager" else [])
     )
     align_block_line_numbers(docstring, result)
     return result
